@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple
 
 import IDNotFoundError
 import IDNotUniqueError
+import InputLengthDoesNotMatchError
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -27,6 +28,7 @@ class GraphProcessor:
         IDNotUniqueError.check(vertex_ids, edge_ids)
         IDNotFoundError.check_source(source_vertex_id, vertex_ids)
         IDNotFoundError.check_pairs(edge_vertex_id_pairs, vertex_ids)
+        InputLengthDoesNotMatchError.check(edge_enabled, edge_ids)
         self.vertex_ids = vertex_ids
         self.edge_ids = edge_ids
         self.edge_vertex_id_pairs = edge_vertex_id_pairs
