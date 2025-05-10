@@ -5,7 +5,7 @@ def check(edge_enabled,edge_vertex_id_pairs):
         if enabled:
             G.add_edge(u, v)
 
-    has_cycle = nx.is_forest(G)
+    has_cycle = nx.is_forest(G) #A forest is a graph with no undirected cycles
     if (has_cycle==False):
         raise Exception("GraphCycleError")
     
