@@ -1,11 +1,11 @@
 def check_source(source_vertex_id, vertex_ids):
     if source_vertex_id not in vertex_ids:
-        raise Exception("Source vertex ID not found")
+        raise Exception("IDNotFoundError")
 
 
 def check_pairs(edge_vertex_id_pairs, vertex_ids):
     if all(all(elem in vertex_ids for elem in t) for t in edge_vertex_id_pairs) == False:
-        raise Exception("Edge vertex pairs must contain valid vertex IDs")
+        raise Exception("IDNotFoundError")
 
 
 # vertex_ids = [0, 2, 4, 6, 10]

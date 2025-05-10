@@ -26,9 +26,13 @@ class GraphProcessor:
         source_vertex_id: int,
     ) -> None:
         IDNotUniqueError.check(vertex_ids, edge_ids)
-        IDNotFoundError.check_source(source_vertex_id, vertex_ids)
+        InputLengthDoesNotMatchError.check_pairs(edge_vertex_id_pairs, edge_ids)
         IDNotFoundError.check_pairs(edge_vertex_id_pairs, vertex_ids)
-        InputLengthDoesNotMatchError.check(edge_enabled, edge_ids)
+        InputLengthDoesNotMatchError.check_enabled(edge_enabled, edge_ids)
+        IDNotFoundError.check_source(source_vertex_id, vertex_ids)
+
+        
+
         self.vertex_ids = vertex_ids
         self.edge_ids = edge_ids
         self.edge_vertex_id_pairs = edge_vertex_id_pairs
