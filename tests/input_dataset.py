@@ -1,13 +1,13 @@
 from typing import Dict, List, Tuple
 
+import GraphCycleError
+import GraphNotFullyConnectedError
 import IDNotFoundError
 import IDNotUniqueError
 import InputLengthDoesNotMatchError
 import networkx as nx
 import numpy as np
 import pandas as pd
-import GraphCycleError
-import GraphNotFullyConnectedError
 
 """
 vertex_ids: list of vertex ids
@@ -32,8 +32,8 @@ class GraphProcessor:
         IDNotFoundError.check_pairs(edge_vertex_id_pairs, vertex_ids)
         InputLengthDoesNotMatchError.check_enabled(edge_enabled, edge_ids)
         IDNotFoundError.check_source(source_vertex_id, vertex_ids)
-        GraphNotFullyConnectedError.check(vertex_ids, edge_ids,edge_enabled,edge_vertex_id_pairs)
-        GraphCycleError.check(edge_enabled,edge_vertex_id_pairs)
+        GraphNotFullyConnectedError.check(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs)
+        GraphCycleError.check(edge_enabled, edge_vertex_id_pairs)
 
         self.vertex_ids = vertex_ids
         self.edge_ids = edge_ids
