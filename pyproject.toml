@@ -23,7 +23,10 @@ dev = [
   'black',
   'isort',
   'pylint',
-  'pytest-cov'
+  'pytest-cov',
+  'scipy',
+  'numpy',
+  'pandas'
 ]
 
 # add more dependencies for running the examples
