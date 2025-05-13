@@ -6,6 +6,12 @@ We define a graph processor class with some function skeletons.
 
 from typing import List, Tuple
 
+import networkx as nx
+import numpy as np
+import pandas as pd
+from scipy.sparse import csr_array
+from scipy.sparse.csgraph import connected_components
+
 
 class IDNotFoundError(Exception):
     """Raised when a given vertex or edge ID is not found in the graph."""
@@ -41,6 +47,63 @@ class EdgeAlreadyDisabledError(Exception):
     """Raised when attempting to disable an already disabled edge."""
 
     pass
+
+
+def check_cycle(edge_enabled, edge_vertex_id_pairs):
+    G = nx.Graph()
+    for (u, v), enabled in zip(edge_vertex_id_pairs, edge_enabled):
+        if enabled:
+            G.add_edge(u, v)
+
+    has_cycle = nx.is_forest(G)  # A forest is a graph with no undirected cycles
+    if has_cycle == False:
+        raise GraphCycleError("Graph contains a cycle")
+
+
+def check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs):
+    size = len(vertex_ids)
+    sparseMatrix = [[0 for i in range(size)] for j in range(size)]
+    for i in range(size):
+        for j in range(size):
+            if ((vertex_ids[i], vertex_ids[j]) in edge_vertex_id_pairs) and sparseMatrix[i][j] == 0:
+                if edge_enabled[edge_vertex_id_pairs.index((vertex_ids[i], vertex_ids[j]))]:
+                    sparseMatrix[i][j] = vertex_ids[j]
+                    sparseMatrix[j][i] = vertex_ids[i]
+            elif ((vertex_ids[j], vertex_ids[i]) in edge_vertex_id_pairs) and sparseMatrix[i][j] == 0:
+                if edge_enabled[edge_vertex_id_pairs.index((vertex_ids[j], vertex_ids[i]))]:
+                    sparseMatrix[i][j] = vertex_ids[j]
+                    sparseMatrix[j][i] = vertex_ids[i]
+    graph = csr_array(sparseMatrix)
+    components = connected_components(graph)
+    if components[0] > 1:
+        raise GraphNotFullyConnectedError("Graph contains more than 1 component")
+
+
+def check_found_source(source_vertex_id, vertex_ids):
+    if source_vertex_id not in vertex_ids:
+        raise IDNotFoundError("Source vertex id not found")
+
+
+def check_found_pairs(edge_vertex_id_pairs, vertex_ids):
+    if all(all(elem in vertex_ids for elem in t) for t in edge_vertex_id_pairs) == False:
+        raise IDNotFoundError("Vertex id not found in edge array")
+
+
+def check_length_enabled(edge_enabled, edge_ids):
+    if len(edge_enabled) != len(edge_ids):
+        raise InputLengthDoesNotMatchError("Number of enabled and disabled edges does not match number of total edges")
+
+
+def check_length_pairs(edge_vertex_id_pairs, edge_ids):
+    if len(edge_vertex_id_pairs) != len(edge_ids):
+        raise InputLengthDoesNotMatchError("Number of vertex pairs does not match number of edges")
+
+
+def check_unique(vertex_ids, edge_ids):
+    ver = list(set(vertex_ids))
+    edge = list(set(edge_ids))
+    if len(ver) != len(vertex_ids) or len(edge) != len(edge_ids):
+        raise IDNotUniqueError("Vertex or edge ids are not unique")
 
 
 class GraphProcessor:
@@ -80,7 +143,19 @@ class GraphProcessor:
             edge_enabled: list of bools indicating of an edge is enabled or not
             source_vertex_id: vertex id of the source in the graph
         """
-        # put your implementation here
+        check_unique(vertex_ids, edge_ids)
+        check_length_pairs(edge_vertex_id_pairs, edge_ids)
+        check_found_pairs(edge_vertex_id_pairs, vertex_ids)
+        check_length_enabled(edge_enabled, edge_ids)
+        check_found_source(source_vertex_id, vertex_ids)
+        check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs)
+        check_cycle(edge_enabled, edge_vertex_id_pairs)
+
+        self.vertex_ids = vertex_ids
+        self.edge_ids = edge_ids
+        self.edge_vertex_id_pairs = edge_vertex_id_pairs
+        self.edge_enabled = edge_enabled
+        self.source_vertex_id = source_vertex_id
         pass
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
