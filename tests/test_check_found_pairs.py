@@ -11,6 +11,7 @@ def test_check_found_pairs():
     assert str(excinfo.value) == "Vertex id not found in edge array"
 
 
+# test_check_found_pairs()
 # vertex_ids = [0, 2, 4, 6, 10]
 # edge_vertex_id_pairs = [(0, 2), (0, 4), (0, 6), (2, 4), (2, 10), (4, 6)]
 # test_check_found_pairs()

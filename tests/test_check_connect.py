@@ -13,6 +13,7 @@ def test_check_connect():
     assert str(excinfo.value) == "Graph contains more than 1 component"
 
 
+# test_check_connect()
 # edge_ids = [1, 3, 5, 7, 8, 9]
 # vertex_ids = [0, 2, 4, 6, 10]
 # edge_enabled = [True, True, True, False, False, True]
