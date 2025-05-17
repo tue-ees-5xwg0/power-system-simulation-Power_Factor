@@ -7,8 +7,6 @@ We define a graph processor class with some function skeletons.
 from typing import List, Tuple
 
 import networkx as nx
-import numpy as np
-import pandas as pd
 from scipy.sparse import csr_array
 from scipy.sparse.csgraph import connected_components
 
@@ -94,7 +92,7 @@ def check_unique(vertex_ids, edge_ids):
         raise IDNotUniqueError("Vertex or edge ids are not unique")
 
 
-class GraphProcessor:
+class GraphProcessor(nx.Graph):
     """
     General documentation of this class.
     You need to describe the purpose of this class and the functions in it.
@@ -139,11 +137,10 @@ class GraphProcessor:
         check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs)
         check_cycle(edge_enabled, edge_vertex_id_pairs)
 
-        self.vertex_ids = vertex_ids
-        self.edge_ids = edge_ids
-        self.edge_vertex_id_pairs = edge_vertex_id_pairs
-        self.edge_enabled = edge_enabled
         self.source_vertex_id = source_vertex_id
+        self.add_nodes_from(vertex_ids)
+        for i, (u, v) in enumerate(edge_vertex_id_pairs):
+            self.add_edge(u, v, id=edge_ids[i], enabled=edge_enabled[i])
 
         # vertex_ids = [0, 2, 4, 6, 10]
 
