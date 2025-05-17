@@ -16,37 +16,25 @@ from scipy.sparse.csgraph import connected_components
 class IDNotFoundError(Exception):
     """Raised when a given vertex or edge ID is not found in the graph."""
 
-    pass
-
 
 class InputLengthDoesNotMatchError(Exception):
     """Raised when input lists have mismatched lengths."""
-
-    pass
 
 
 class IDNotUniqueError(Exception):
     """Raised when duplicate IDs are found in vertex_ids or edge_ids."""
 
-    pass
-
 
 class GraphNotFullyConnectedError(Exception):
     """Raised when the graph is not fully connected."""
-
-    pass
 
 
 class GraphCycleError(Exception):
     """Raised when the graph contains cycles."""
 
-    pass
-
 
 class EdgeAlreadyDisabledError(Exception):
     """Raised when attempting to disable an already disabled edge."""
-
-    pass
 
 
 def check_cycle(edge_enabled, edge_vertex_id_pairs):
