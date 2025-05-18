@@ -112,4 +112,4 @@ def test_find_alternative_edges():
     assert str(excinfo.value) == "Edge is already disabled"
 
 
-#test_find_alternative_edges()
+test_find_alternative_edges()
