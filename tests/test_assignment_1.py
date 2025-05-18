@@ -60,6 +60,7 @@ def test_check_unique():
         a1.check_unique(vertex_ids, edge_ids)
     assert str(excinfo.value) == "Vertex or edge ids are not unique"
 
+
 def test_check_downstream_vertex():
     vertex_ids = [0, 2, 4, 6, 8, 10, 12]
     edge_ids = [1, 3, 5, 7, 9, 11]
@@ -82,6 +83,5 @@ def test_check_downstream_vertex():
         test.find_downstream_vertices(2)
     assert str(excinfo.value) == "Edge ID not found."
 
-    
 
 test_check_downstream_vertex()

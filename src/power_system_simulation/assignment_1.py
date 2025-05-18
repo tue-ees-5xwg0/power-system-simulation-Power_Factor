@@ -77,8 +77,7 @@ def check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs):
     graph = csr_array(sparseMatrix)
     components = connected_components(graph)
     if components[0] > 1:
-        raise GraphNotFullyConnectedError(
-            "Graph contains more than 1 component")
+        raise GraphNotFullyConnectedError("Graph contains more than 1 component")
 
 
 def check_found_source(source_vertex_id, vertex_ids):
@@ -93,14 +92,12 @@ def check_found_pairs(edge_vertex_id_pairs, vertex_ids):
 
 def check_length_enabled(edge_enabled, edge_ids):
     if len(edge_enabled) != len(edge_ids):
-        raise InputLengthDoesNotMatchError(
-            "Number of enabled and disabled edges does not match number of total edges")
+        raise InputLengthDoesNotMatchError("Number of enabled and disabled edges does not match number of total edges")
 
 
 def check_length_pairs(edge_vertex_id_pairs, edge_ids):
     if len(edge_vertex_id_pairs) != len(edge_ids):
-        raise InputLengthDoesNotMatchError(
-            "Number of vertex pairs does not match number of edges")
+        raise InputLengthDoesNotMatchError("Number of vertex pairs does not match number of edges")
 
 
 def check_unique(vertex_ids, edge_ids):
@@ -205,11 +202,11 @@ class GraphProcessor(nx.Graph):
         """
         if edge_id not in self.edge_ids:
             raise IDNotFoundError("Edge ID not found.")
-        
+
         edge_index = self.edge_ids.index(edge_id)
         if not self.edge_enabled[edge_index]:
             return []
-        
+
         # Create a graph using only enabled edges
         G = nx.Graph()
         for (u, v), enabled in zip(self.edge_vertex_id_pairs, self.edge_enabled):
@@ -236,12 +233,12 @@ class GraphProcessor(nx.Graph):
         else:
             # Neither node is reachable from source (shouldn't happen in connected graph)
             return []
-        
+
         # Collect all downstream vertices starting from downstream_root
         descendants = list(nx.descendants(dfs, downstream_root))
         print([downstream_root] + descendants)
         return [downstream_root] + descendants
-    
+
         pass
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
