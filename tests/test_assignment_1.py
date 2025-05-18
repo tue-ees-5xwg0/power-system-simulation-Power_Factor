@@ -59,3 +59,29 @@ def test_check_unique():
     with pytest.raises(a1.IDNotUniqueError) as excinfo:
         a1.check_unique(vertex_ids, edge_ids)
     assert str(excinfo.value) == "Vertex or edge ids are not unique"
+
+def test_check_downstream_vertex():
+    vertex_ids = [0, 2, 4, 6, 8, 10, 12]
+    edge_ids = [1, 3, 5, 7, 9, 11]
+    edge_vertex_id_pairs = [(0, 2), (2, 4), (2, 6), (4, 8), (8, 10), (6, 12)]
+    edge_enabled = [True, True, True, True, True, True]
+    source_vertex_id = 0
+
+    """
+    vertex_0 (source) --edge_1-- vertex_2 --edge_3-- vertex_4--edge 7--vertex 8 --edge 9--vertex 10
+                                    |
+                                  edge 5
+                                    |
+                                 vertex 6  --edge 11 --vertex 12
+    """
+
+    test = a1.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
+    assert test.find_downstream_vertices(1) == [2, 4, 6, 8, 10, 12]
+
+    with pytest.raises(a1.IDNotFoundError) as excinfo:
+        test.find_downstream_vertices(2)
+    assert str(excinfo.value) == "Edge ID not found."
+
+    
+
+test_check_downstream_vertex()

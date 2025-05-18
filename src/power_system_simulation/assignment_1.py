@@ -7,6 +7,8 @@ We define a graph processor class with some function skeletons.
 from typing import List, Tuple
 
 import networkx as nx
+import numpy as np
+import pandas as pd
 from scipy.sparse import csr_array
 from scipy.sparse.csgraph import connected_components
 
@@ -14,25 +16,37 @@ from scipy.sparse.csgraph import connected_components
 class IDNotFoundError(Exception):
     """Raised when a given vertex or edge ID is not found in the graph."""
 
+    pass
+
 
 class InputLengthDoesNotMatchError(Exception):
     """Raised when input lists have mismatched lengths."""
+
+    pass
 
 
 class IDNotUniqueError(Exception):
     """Raised when duplicate IDs are found in vertex_ids or edge_ids."""
 
+    pass
+
 
 class GraphNotFullyConnectedError(Exception):
     """Raised when the graph is not fully connected."""
+
+    pass
 
 
 class GraphCycleError(Exception):
     """Raised when the graph contains cycles."""
 
+    pass
+
 
 class EdgeAlreadyDisabledError(Exception):
     """Raised when attempting to disable an already disabled edge."""
+
+    pass
 
 
 def check_cycle(edge_enabled, edge_vertex_id_pairs):
@@ -41,7 +55,8 @@ def check_cycle(edge_enabled, edge_vertex_id_pairs):
         if enabled:
             G.add_edge(u, v)
 
-    has_cycle = nx.is_forest(G)  # A forest is a graph with no undirected cycles
+    # A forest is a graph with no undirected cycles
+    has_cycle = nx.is_forest(G)
     if has_cycle == False:
         raise GraphCycleError("Graph contains a cycle")
 
@@ -62,7 +77,8 @@ def check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs):
     graph = csr_array(sparseMatrix)
     components = connected_components(graph)
     if components[0] > 1:
-        raise GraphNotFullyConnectedError("Graph contains more than 1 component")
+        raise GraphNotFullyConnectedError(
+            "Graph contains more than 1 component")
 
 
 def check_found_source(source_vertex_id, vertex_ids):
@@ -77,12 +93,14 @@ def check_found_pairs(edge_vertex_id_pairs, vertex_ids):
 
 def check_length_enabled(edge_enabled, edge_ids):
     if len(edge_enabled) != len(edge_ids):
-        raise InputLengthDoesNotMatchError("Number of enabled and disabled edges does not match number of total edges")
+        raise InputLengthDoesNotMatchError(
+            "Number of enabled and disabled edges does not match number of total edges")
 
 
 def check_length_pairs(edge_vertex_id_pairs, edge_ids):
     if len(edge_vertex_id_pairs) != len(edge_ids):
-        raise InputLengthDoesNotMatchError("Number of vertex pairs does not match number of edges")
+        raise InputLengthDoesNotMatchError(
+            "Number of vertex pairs does not match number of edges")
 
 
 def check_unique(vertex_ids, edge_ids):
@@ -129,6 +147,7 @@ class GraphProcessor(nx.Graph):
             edge_enabled: list of bools indicating of an edge is enabled or not
             source_vertex_id: vertex id of the source in the graph
         """
+        super().__init__()
         check_unique(vertex_ids, edge_ids)
         check_length_pairs(edge_vertex_id_pairs, edge_ids)
         check_found_pairs(edge_vertex_id_pairs, vertex_ids)
@@ -137,6 +156,10 @@ class GraphProcessor(nx.Graph):
         check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs)
         check_cycle(edge_enabled, edge_vertex_id_pairs)
 
+        self.vertex_ids = vertex_ids
+        self.edge_ids = edge_ids
+        self.edge_vertex_id_pairs = edge_vertex_id_pairs
+        self.edge_enabled = edge_enabled
         self.source_vertex_id = source_vertex_id
         self.add_nodes_from(vertex_ids)
         for i, (u, v) in enumerate(edge_vertex_id_pairs):
@@ -175,7 +198,50 @@ class GraphProcessor(nx.Graph):
         Returns:
             A list of all downstream vertices.
         """
-        # put your implementation here
+
+        """
+        Returns an empty list if the edge is disabled.
+        Raises IDNotFoundError if the edge_id is invalid.
+        """
+        if edge_id not in self.edge_ids:
+            raise IDNotFoundError("Edge ID not found.")
+        
+        edge_index = self.edge_ids.index(edge_id)
+        if not self.edge_enabled[edge_index]:
+            return []
+        
+        # Create a graph using only enabled edges
+        G = nx.Graph()
+        for (u, v), enabled in zip(self.edge_vertex_id_pairs, self.edge_enabled):
+            if enabled:
+                G.add_edge(u, v)
+
+        # Get the endpoints of the edge
+        u, v = self.edge_vertex_id_pairs[edge_index]
+
+        # Generate DFS tree from the source
+        dfs = nx.dfs_tree(G, source=self.source_vertex_id)
+
+        # Check which node (u or v) is downstream from the source
+        if u in dfs and v in dfs:
+            # Return all descendants of the deeper node (child in DFS tree)
+            if u in dfs.predecessors(v):
+                downstream_root = v
+            else:
+                downstream_root = u
+        elif u in dfs:
+            downstream_root = v
+        elif v in dfs:
+            downstream_root = u
+        else:
+            # Neither node is reachable from source (shouldn't happen in connected graph)
+            return []
+        
+        # Collect all downstream vertices starting from downstream_root
+        descendants = list(nx.descendants(dfs, downstream_root))
+        print([downstream_root] + descendants)
+        return [downstream_root] + descendants
+    
         pass
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
