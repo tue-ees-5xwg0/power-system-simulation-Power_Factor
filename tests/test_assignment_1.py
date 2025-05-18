@@ -37,6 +37,14 @@ def test_check_found_source():
     assert str(excinfo.value) == "Source vertex id not found"
 
 
+def test_check_found_edges():
+    disabled_edge_id = 2
+    all_edges = [1, 3, 5, 7, 8, 9]
+    with pytest.raises(a1.IDNotFoundError) as excinfo:
+        a1.check_found_edges(disabled_edge_id, all_edges)
+    assert str(excinfo.value) == "Disabled edge id not found in edge array"
+
+
 def test_check_length_enabled():
     edge_enabled = [True, True, True, False, False, True]
     edge_ids = [1, 3, 7, 8, 9]
@@ -59,3 +67,49 @@ def test_check_unique():
     with pytest.raises(a1.IDNotUniqueError) as excinfo:
         a1.check_unique(vertex_ids, edge_ids)
     assert str(excinfo.value) == "Vertex or edge ids are not unique"
+
+
+def test_check_disabled():
+    disabled_edge_id = 8
+    edge_ids = [1, 3, 5, 8, 9]
+    edge_enabled = [True, True, True, False, False]
+    with pytest.raises(a1.EdgeAlreadyDisabledError) as excinfo:
+        a1.check_disabled(disabled_edge_id, edge_ids, edge_enabled)
+    assert str(excinfo.value) == "Edge is already disabled"
+
+
+def test_find_alternative_edges():
+    vertex_ids = [0, 2, 4, 6, 10]
+    edge_ids = [1, 3, 5, 7, 9, 8]
+    edge_vertex_id_pairs = [(0, 2), (0, 4), (0, 6), (2, 4), (2, 10), (4, 6)]
+    edge_enabled = [True, True, True, False, True, False]
+    source_vertex_id = 0
+
+    """
+            vertex_0 (source) --edge_1(enabled)-- vertex_2 --edge_9(enabled)-- vertex_10
+                 |                               |
+                 |                           edge_7(disabled)
+                 |                               |
+                 -----------edge_3(enabled)-- vertex_4
+                 |                               |
+                 |                           edge_8(disabled)
+                 |                               |
+                 -----------edge_5(enabled)-- vertex_6
+    """
+
+    test = a1.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
+    assert test.find_alternative_edges(1) == [7]
+    assert test.find_alternative_edges(3) == [7, 8]
+    assert test.find_alternative_edges(5) == [8]
+    assert test.find_alternative_edges(9) == []
+
+    with pytest.raises(a1.IDNotFoundError) as excinfo:
+        test.find_alternative_edges(6)
+    assert str(excinfo.value) == "Disabled edge id not found in edge array"
+
+    with pytest.raises(a1.EdgeAlreadyDisabledError) as excinfo:
+        test.find_alternative_edges(7)
+    assert str(excinfo.value) == "Edge is already disabled"
+
+
+#test_find_alternative_edges()

@@ -12,27 +12,27 @@ from scipy.sparse.csgraph import connected_components
 
 
 class IDNotFoundError(Exception):
-    """Raised when a given vertex or edge ID is not found in the graph."""
+    "Source vertex id not found", "Vertex id not found in edge array", "Disabled edge id not found in edge array"
 
 
 class InputLengthDoesNotMatchError(Exception):
-    """Raised when input lists have mismatched lengths."""
+    "Number of enabled and disabled edges does not match number of total edges", "Number of vertex pairs does not match number of edges"
 
 
 class IDNotUniqueError(Exception):
-    """Raised when duplicate IDs are found in vertex_ids or edge_ids."""
+    "Vertex or edge ids are not unique"
 
 
 class GraphNotFullyConnectedError(Exception):
-    """Raised when the graph is not fully connected."""
+    "Graph contains more than 1 component"
 
 
 class GraphCycleError(Exception):
-    """Raised when the graph contains cycles."""
+    "Graph contains a cycle"
 
 
 class EdgeAlreadyDisabledError(Exception):
-    """Raised when attempting to disable an already disabled edge."""
+    "Edge is already disabled"
 
 
 def check_cycle(edge_enabled, edge_vertex_id_pairs):
@@ -75,6 +75,11 @@ def check_found_pairs(edge_vertex_id_pairs, vertex_ids):
         raise IDNotFoundError("Vertex id not found in edge array")
 
 
+def check_found_edges(disabled_edge_id, all_edges):
+    if disabled_edge_id not in all_edges:
+        raise IDNotFoundError("Disabled edge id not found in edge array")
+
+
 def check_length_enabled(edge_enabled, edge_ids):
     if len(edge_enabled) != len(edge_ids):
         raise InputLengthDoesNotMatchError("Number of enabled and disabled edges does not match number of total edges")
@@ -90,6 +95,11 @@ def check_unique(vertex_ids, edge_ids):
     edge = list(set(edge_ids))
     if len(ver) != len(vertex_ids) or len(edge) != len(edge_ids):
         raise IDNotUniqueError("Vertex or edge ids are not unique")
+
+
+def check_disabled(disabled_edge_id, edge_ids, edge_enabled):
+    if edge_enabled[edge_ids.index(disabled_edge_id)] == False:
+        raise EdgeAlreadyDisabledError("Edge is already disabled")
 
 
 class GraphProcessor(nx.Graph):
@@ -129,6 +139,7 @@ class GraphProcessor(nx.Graph):
             edge_enabled: list of bools indicating of an edge is enabled or not
             source_vertex_id: vertex id of the source in the graph
         """
+        super().__init__()
         check_unique(vertex_ids, edge_ids)
         check_length_pairs(edge_vertex_id_pairs, edge_ids)
         check_found_pairs(edge_vertex_id_pairs, vertex_ids)
@@ -138,18 +149,12 @@ class GraphProcessor(nx.Graph):
         check_cycle(edge_enabled, edge_vertex_id_pairs)
 
         self.source_vertex_id = source_vertex_id
+        self.vertex_ids = vertex_ids
+        self.edge_enabled = edge_enabled
+        self.edge_ids = edge_ids
         self.add_nodes_from(vertex_ids)
         for i, (u, v) in enumerate(edge_vertex_id_pairs):
             self.add_edge(u, v, id=edge_ids[i], enabled=edge_enabled[i])
-
-        # vertex_ids = [0, 2, 4, 6, 10]
-
-    # edge_ids = [1, 3, 5, 7, 8, 9]
-    # edge_vertex_id_pairs = [(0, 2), (0, 4), (0, 6), (2, 4), (2, 10), (4, 6)]
-    # edge_enabled = [True, True, True, False, True, True]
-    # source_vertex_id = 0
-
-    # g = GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
@@ -179,9 +184,23 @@ class GraphProcessor(nx.Graph):
         pass
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
+        ans = []
+        check_found_edges(disabled_edge_id, self.edge_ids)
+        check_disabled(disabled_edge_id, self.edge_ids, self.edge_enabled)
+        H = nx.Graph()
+        for i, (u, v) in enumerate(self.edges()):
+            if self.edge_enabled[i] == True and self.edge_ids[i] != disabled_edge_id:
+                H.add_edge(u, v)
+        for i, (u, v) in enumerate(self.edges):
+            if self.edge_enabled[i] == False and self.edge_ids[i] != disabled_edge_id:
+                H.add_edge(u, v)
+                if nx.number_connected_components(H) == 1 and nx.is_forest(H):
+                    ans.append(self.edge_ids[i])
+                H.remove_edge(u, v)
+        return ans
         """
         Given an enabled edge, do the following analysis:
-            If the edge is going to be disabled,
+            If the edge is going to be disabled,    
                 which (currently disabled) edge can be enabled to ensure
                 that the graph is again fully connected and acyclic?
             Return a list of all alternative edges.
@@ -214,4 +233,10 @@ class GraphProcessor(nx.Graph):
             A list of alternative edge ids.
         """
         # put your implementation here
-        pass
+
+
+# vertex_ids = [0, 2, 4, 6, 10]
+# edge_ids = [1, 3, 5, 7, 8, 9]
+# edge_vertex_id_pairs = [(0, 2), (0, 4), (0, 6), (2, 4), (2, 10), (4, 6)]
+# edge_enabled = [True, True, True, False, True, True]
+# source_vertex_id = 0
