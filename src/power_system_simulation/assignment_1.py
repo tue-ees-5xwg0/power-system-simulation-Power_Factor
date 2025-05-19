@@ -170,6 +170,16 @@ class GraphProcessor(nx.Graph):
     # source_vertex_id = 0
 
     # g = GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
+    
+    # Build enabled subgraph for fast queries
+        self.enabled_subgraph = nx.Graph()
+        for (u, v), enabled in zip(edge_vertex_id_pairs, edge_enabled):
+            if enabled:
+                self.enabled_subgraph.add_edge(u, v)
+
+        # DFS tree & parent map from source
+        self.dfs_tree = nx.dfs_tree(self.enabled_subgraph, self.source_vertex_id)
+        self.parent_map = {child: parent for parent, child in nx.dfs_edges(self.dfs_tree, source=self.source_vertex_id)}
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
@@ -207,35 +217,24 @@ class GraphProcessor(nx.Graph):
         if not self.edge_enabled[edge_index]:
             return []
 
-        # Create a graph using only enabled edges
-        G = nx.Graph()
-        for (u, v), enabled in zip(self.edge_vertex_id_pairs, self.edge_enabled):
-            if enabled:
-                G.add_edge(u, v)
-
-        # Get the endpoints of the edge
         u, v = self.edge_vertex_id_pairs[edge_index]
 
-        # Generate DFS tree from the source
-        dfs = nx.dfs_tree(G, source=self.source_vertex_id)
-
-        # Check which node (u or v) is downstream from the source
-        if u in dfs and v in dfs:
-            # Return all descendants of the deeper node (child in DFS tree)
-            if u in dfs.predecessors(v):
-                downstream_root = v
-            else:
-                downstream_root = u
-        elif u in dfs:
-            downstream_root = v
-        elif v in dfs:
-            downstream_root = u
-        else:
-            # Neither node is reachable from source (shouldn't happen in connected graph)
+        # Ensure both u and v are reachable
+        if u not in self.dfs_tree or v not in self.dfs_tree:
             return []
 
-        # Collect all downstream vertices starting from downstream_root
-        descendants = list(nx.descendants(dfs, downstream_root))
+        # Determine downstream vertex (child in DFS tree)
+        if self.parent_map.get(v) == u:
+            downstream_root = v
+        elif self.parent_map.get(u) == v:
+            downstream_root = u
+        else:
+            # If neither is parent of the other, one of them is ancestor; pick the child
+            # or fallback to whichever is deeper
+            depth = nx.single_source_shortest_path_length(self.dfs_tree, self.source_vertex_id)
+            downstream_root = v if depth.get(v, 0) > depth.get(u, 0) else u
+
+        descendants = list(nx.descendants(self.dfs_tree, downstream_root))
         print([downstream_root] + descendants)
         return [downstream_root] + descendants
 
