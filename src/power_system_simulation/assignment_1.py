@@ -152,9 +152,18 @@ class GraphProcessor(nx.Graph):
         self.vertex_ids = vertex_ids
         self.edge_enabled = edge_enabled
         self.edge_ids = edge_ids
+        self.edge_vertex_id_pairs = edge_vertex_id_pairs
         self.add_nodes_from(vertex_ids)
         for i, (u, v) in enumerate(edge_vertex_id_pairs):
             self.add_edge(u, v, id=edge_ids[i], enabled=edge_enabled[i])
+
+        self.enabled_subgraph = nx.Graph()
+        for (u, v), enabled in zip(edge_vertex_id_pairs, edge_enabled):
+            if enabled:
+                self.enabled_subgraph.add_edge(u, v)
+        # DFS tree & parent map from source
+        self.dfs_tree = nx.dfs_tree(self.enabled_subgraph, self.source_vertex_id)
+        self.parent_map = {child: parent for parent, child in nx.dfs_edges(self.dfs_tree, source=self.source_vertex_id)}
 
     def find_downstream_vertices(self, edge_id: int) -> List[int]:
         """
@@ -180,8 +189,35 @@ class GraphProcessor(nx.Graph):
         Returns:
             A list of all downstream vertices.
         """
+
+        if edge_id not in self.edge_ids:
+            raise IDNotFoundError("Edge ID not found.")
+
+        edge_index = self.edge_ids.index(edge_id)
+        if not self.edge_enabled[edge_index]:
+            return []
+
+        u, v = self.edge_vertex_id_pairs[edge_index]
+
+        # Ensure both u and v are reachable
+        if u not in self.dfs_tree or v not in self.dfs_tree:
+            return []
+
+        # Determine downstream vertex (child in DFS tree)
+        if self.parent_map.get(v) == u:
+            downstream_root = v
+        elif self.parent_map.get(u) == v:
+            downstream_root = u
+        else:
+            # If neither is parent of the other, one of them is ancestor; pick the child
+            # or fallback to whichever is deeper
+            depth = nx.single_source_shortest_path_length(self.dfs_tree, self.source_vertex_id)
+            downstream_root = v if depth.get(v, 0) > depth.get(u, 0) else u
+
+        descendants = list(nx.descendants(self.dfs_tree, downstream_root))
+        print([downstream_root] + descendants)
+        return [downstream_root] + descendants
         # put your implementation here
-        pass
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
         ans = []
