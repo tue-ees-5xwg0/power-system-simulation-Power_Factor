@@ -171,7 +171,7 @@ class GraphProcessor(nx.Graph):
 
     # g = GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
     
-    # Build enabled subgraph for fast queries
+        # Build enabled subgraph for fast queries
         self.enabled_subgraph = nx.Graph()
         for (u, v), enabled in zip(edge_vertex_id_pairs, edge_enabled):
             if enabled:
