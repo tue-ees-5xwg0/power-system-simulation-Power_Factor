@@ -104,7 +104,7 @@ def test_find_alternative_edges():
     assert test.find_alternative_edges(9) == []
 
     with pytest.raises(a1.IDNotFoundError) as excinfo:
-        test.find_alternative_edges(6)
+        test.find_alternative_edges(3)
     assert str(excinfo.value) == "Disabled edge id not found in edge array"
 
     with pytest.raises(a1.EdgeAlreadyDisabledError) as excinfo:
