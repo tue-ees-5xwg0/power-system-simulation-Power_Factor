@@ -237,8 +237,7 @@ class GraphProcessor(nx.Graph):
         descendants = list(nx.descendants(self.dfs_tree, downstream_root))
         print([downstream_root] + descendants)
         return [downstream_root] + descendants
-
-        pass
+    
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
         """
