@@ -53,3 +53,8 @@ print("components:", list(dataset.keys()))
 #display(dataset[ComponentType.line]["from_node"])
 #display(DataFrame(dataset[ComponentType.line]))
 
+# Read the batch data data and transform it into a DataFrame
+active_power_batch = pd.read_parquet("data/input/active_power_profile.parquet")
+reactive_power_batch = pd.read_parquet("data/input/reactive_power_profile.parquet")
+if not active_power_batch.index.equals(reactive_power_batch.index): # Check if the timestamps are the same else give an error
+    raise ValidationException("Active and reactive batch data have different timestamps")
