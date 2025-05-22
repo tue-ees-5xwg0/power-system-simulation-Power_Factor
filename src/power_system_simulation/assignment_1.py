@@ -148,7 +148,6 @@ class GraphProcessor(nx.Graph):
         check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs)
         check_cycle(edge_enabled, edge_vertex_id_pairs)
 
-        nx.Graph.__init__(self)
         self.source_vertex_id = source_vertex_id
         self.vertex_ids = vertex_ids
         self.edge_enabled = edge_enabled
@@ -191,24 +190,6 @@ class GraphProcessor(nx.Graph):
             A list of all downstream vertices.
         """
 
-<<<<<<< HEAD
-        self._edge_index = {eid: i for i, eid in enumerate(edge_ids)}
-        if edge_id not in self._edge_index:
-            raise IDNotFoundError("Edge id not found")
-        
-        idx = 0
-        for i in range(len(edge_ids)):
-            if edge_ids[i] == edge_id:
-                idx = i
-                if edge_enabled[i] == False:
-                    return []
-                else:
-                    break
-        print(edge_vertex_id_pairs[idx][1])
-        dfs_edges = list(nx.dfs_successors(self, source=edge_vertex_id_pairs[idx][1]))
-        print("DFS Edges:", dfs_edges)
-        pass
-=======
         if edge_id not in self.edge_ids:
             raise IDNotFoundError("Edge ID not found.")
 
@@ -237,7 +218,6 @@ class GraphProcessor(nx.Graph):
         print([downstream_root] + descendants)
         return [downstream_root] + descendants
         # put your implementation here
->>>>>>> 7280d791fe43845427b9261bec48916a2f562d5a
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
         ans = []
@@ -289,17 +269,6 @@ class GraphProcessor(nx.Graph):
             A list of alternative edge ids.
         """
         # put your implementation here
-<<<<<<< HEAD
-        pass
-
-vertex_ids = [0, 2, 4, 6, 10]
-edge_ids = [1, 3, 5, 7]
-edge_vertex_id_pairs = [(0, 2), (0, 4), (2, 6), (2, 10)]
-edge_enabled = [True, True, True, True]
-source_vertex_id = 0
-g = GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
-g.find_downstream_vertices(1)
-=======
 
 
 # vertex_ids = [0, 2, 4, 6, 10]
@@ -307,4 +276,3 @@ g.find_downstream_vertices(1)
 # edge_vertex_id_pairs = [(0, 2), (0, 4), (0, 6), (2, 4), (2, 10), (4, 6)]
 # edge_enabled = [True, True, True, False, True, True]
 # source_vertex_id = 0
->>>>>>> 7280d791fe43845427b9261bec48916a2f562d5a
