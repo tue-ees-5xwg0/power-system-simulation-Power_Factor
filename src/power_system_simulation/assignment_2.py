@@ -87,7 +87,9 @@ def power_flow_results(update_data, batch_profile):
                 max_loading_timestamp[i] = batch_profile.index[j]
 
         # Add the energy loss with the trapezoidal rule!! ######################
-
+    display(output_data[ComponentType.line]["p_from"])
+    display(output_data[ComponentType.line]["p_to"])
+    display(np.trapezoid(output_data[ComponentType.line]["p_from"]+output_data[ComponentType.line]["p_to"], dx=3600*(10**9), axis=0)/(3.6*(10**15)))
     # display(output_data[ComponentType.line]["loading"])
     # display(max_loading)
     # display(max_loading_timestamp)
@@ -129,9 +131,9 @@ try:
 except:
     raise ValidationException("Error deserializing input data")
 
-# print("components:", list(dataset.keys()))
-# display(dataset[ComponentType.line]["from_node"])
-# display(DataFrame(dataset[ComponentType.line]))
+# print("components:", list(input_data.keys()))
+# display(input_data[ComponentType.line]["from_node"])
+display(DataFrame(input_data[ComponentType.line]))
 
 # Read the batch data (update data) and transform it into a DataFrame
 active_power_profile = pd.read_parquet(
