@@ -103,6 +103,10 @@ def power_flow_results(update_data, batch_profile):
     # display(max_loading_timestamp)
 
     output_line = pd.DataFrame()
+    display(output_data[ComponentType.line]["p_from"])
+    display(output_data[ComponentType.line]["p_to"])
+    display(np.trapezoid(output_data[ComponentType.line]["p_from"]+output_data[ComponentType.line]["p_to"], dx=3600*(10**9), axis=0)/(3.6*(10**15)))
+    
     output_line["id"] = ids
     output_line["Total_loss"] = np.zeros(len(ids))  # Not yet calculated so placeholders are zeros
     output_line["Max_loading"] = max_loading
@@ -152,8 +156,8 @@ if not active_power_profile.index.equals(
     reactive_power_profile.index
 ):  # Check if the timestamps between the batches are the same else give an error
     raise ValidationException("Active and reactive batch data have different timestamps")
-# display(active_power_profile)
-# display(reactive_power_profile)
+display(active_power_profile)
+display(reactive_power_profile)
 
 # Run batch series with active power profile (The batch profile should probably be the input to the overall function when implemented, then it would also be easier to do it with the reactive profile)
 load_profile_active = initialize_array(DatasetType.update, ComponentType.sym_load, active_power_profile.shape)
