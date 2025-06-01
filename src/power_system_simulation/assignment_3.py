@@ -34,13 +34,13 @@ assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.
 #print(pd.DataFrame(input_data[ComponentType.transformer]))
 
 
-with open("data/assignment 3 input/input_network_data.json") as fp:
+with open("data/assignment 3 input/meta_data.json") as fp:
     meta = fp.read()
 
-#pprint.pprint(json.loads(meta))
+pprint.pprint(json.loads(meta))
 
-meta_data = json_deserialize(meta)
-assert_valid_input_data(input_data=meta_data, calculation_type=CalculationType.power_flow)
+#meta_data = json_deserialize(meta)
+#assert_valid_input_data(input_data=meta_data, calculation_type=CalculationType.power_flow)
 
 #print("components:", list(meta_data.keys()))
 #display(meta_data[ComponentType.node])
