@@ -11,31 +11,39 @@ from scipy.sparse import csr_array
 from scipy.sparse.csgraph import connected_components
 
 
+
 class IDNotFoundError(Exception):
-    "Source vertex id not found", "Vertex id not found in edge array", "Disabled edge id not found in edge array"
+    """Raised when a specified vertex or edge ID is not found."""
+    pass
 
 
 class InputLengthDoesNotMatchError(Exception):
-    "Number of enabled and disabled edges does not match number of total edges", "Number of vertex pairs does not match number of edges"
+    """Raised when the length of one input list does not match the expected length."""
+    pass
 
 
 class IDNotUniqueError(Exception):
-    "Vertex or edge ids are not unique"
+    """Raised when provided vertex or edge IDs are not unique."""
+    pass
 
 
 class GraphNotFullyConnectedError(Exception):
-    "Graph contains more than 1 component"
+    """Raised when the constructed graph has more than one connected component."""
+    pass
 
 
 class GraphCycleError(Exception):
-    "Graph contains a cycle"
+    """Raised when the constructed graph contains a cycle."""
+    pass
 
 
 class EdgeAlreadyDisabledError(Exception):
-    "Edge is already disabled"
+    """Raised when attempting to disable an edge that is already disabled."""
+    pass
 
 
 def check_cycle(edge_enabled, edge_vertex_id_pairs):
+    '''Check if the graph contains a cycle.'''
     G = nx.Graph()
     for (u, v), enabled in zip(edge_vertex_id_pairs, edge_enabled):
         if enabled:
@@ -47,6 +55,7 @@ def check_cycle(edge_enabled, edge_vertex_id_pairs):
 
 
 def check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs):
+    '''Check if the graph is fully connected.'''
     size = len(vertex_ids)
     sparseMatrix = [[0 for i in range(size)] for j in range(size)]
     for i in range(size):
@@ -62,44 +71,52 @@ def check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs):
     graph = csr_array(sparseMatrix)
     components = connected_components(graph)
     if components[0] > 1:
-        raise GraphNotFullyConnectedError("Graph contains more than 1 component")
+        raise GraphNotFullyConnectedError(f"Graph is not fully connected. Found {components[0]} components.")
 
 
 def check_found_source(source_vertex_id, vertex_ids):
+    '''Check if the source vertex id is found in vertex_ids.'''
     if source_vertex_id not in vertex_ids:
-        raise IDNotFoundError("Source vertex id not found")
+        raise IDNotFoundError(f"Source vertex ID {source_vertex_id} not found among vertices {vertex_ids}.")
 
 
 def check_found_pairs(edge_vertex_id_pairs, vertex_ids):
+    '''Check if all vertex ids in edge_vertex_id_pairs are found in vertex_ids.'''
     if all(all(elem in vertex_ids for elem in t) for t in edge_vertex_id_pairs) == False:
-        raise IDNotFoundError("Vertex id not found in edge array")
+        raise IDNotFoundError(f"Vertex ids in edge_vertex_id_pairs {edge_vertex_id_pairs} not found in vertex_ids {vertex_ids}.") 
 
 
 def check_found_edges(disabled_edge_id, all_edges):
+    '''Check if the disabled edge id is found in all_edges.'''
     if disabled_edge_id not in all_edges:
-        raise IDNotFoundError("Disabled edge id not found in edge array")
+        raise IDNotFoundError(f"edge ID {disabled_edge_id} not found among edges {all_edges}.")
 
 
 def check_length_enabled(edge_enabled, edge_ids):
+    '''Check if the number of enabled and disabled edges matches the number of total edges.'''
     if len(edge_enabled) != len(edge_ids):
-        raise InputLengthDoesNotMatchError("Number of enabled and disabled edges does not match number of total edges")
+        raise InputLengthDoesNotMatchError(f"Number of enabled edges {len(edge_enabled)} does not match number of edges {len(edge_ids)}.")
 
 
 def check_length_pairs(edge_vertex_id_pairs, edge_ids):
+    '''Check if the number of vertex pairs matches the number of edges.'''
     if len(edge_vertex_id_pairs) != len(edge_ids):
-        raise InputLengthDoesNotMatchError("Number of vertex pairs does not match number of edges")
+        raise InputLengthDoesNotMatchError(f"Number of edge vertex id pairs {len(edge_vertex_id_pairs)} does not match number of edges {len(edge_ids)}.")
 
 
 def check_unique(vertex_ids, edge_ids):
+    '''Check if vertex_ids and edge_ids are unique.'''
     ver = list(set(vertex_ids))
     edge = list(set(edge_ids))
-    if len(ver) != len(vertex_ids) or len(edge) != len(edge_ids):
-        raise IDNotUniqueError("Vertex or edge ids are not unique")
-
+    if len(set(vertex_ids)) != len(vertex_ids):
+        raise IDNotUniqueError(f"Vertex IDs are not unique: {vertex_ids}.")
+    if len(set(edge_ids)) != len(edge_ids):
+        raise IDNotUniqueError(f"Edge IDs are not unique: {edge_ids}.")
 
 def check_disabled(disabled_edge_id, edge_ids, edge_enabled):
+    '''Check if the disabled edge id is already disabled.'''
     if edge_enabled[edge_ids.index(disabled_edge_id)] == False:
-        raise EdgeAlreadyDisabledError("Edge is already disabled")
+        raise EdgeAlreadyDisabledError(f"Edge ID {disabled_edge_id} is already disabled.")
 
 
 class GraphProcessor(nx.Graph):
