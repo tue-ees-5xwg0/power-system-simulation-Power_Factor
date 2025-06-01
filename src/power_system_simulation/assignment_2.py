@@ -21,6 +21,7 @@ class ValidationException(Exception):
 
 ######################################### Implementing the functionalities #########################################
 
+
 def power_flow_results(update_data, batch_profile):
     """This function performs an analysis of the power flow results by finding minimum and maximum values for each node and line"""
     # Assert valid data and calculate power flow
@@ -89,7 +90,14 @@ def power_flow_results(update_data, batch_profile):
         # Add the energy loss with the trapezoidal rule!! ######################
     display(output_data[ComponentType.line]["p_from"])
     display(output_data[ComponentType.line]["p_to"])
-    display(np.trapezoid(output_data[ComponentType.line]["p_from"]+output_data[ComponentType.line]["p_to"], dx=3600*(10**9), axis=0)/(3.6*(10**15)))
+    display(
+        np.trapezoid(
+            output_data[ComponentType.line]["p_from"] + output_data[ComponentType.line]["p_to"],
+            dx=3600 * (10**9),
+            axis=0,
+        )
+        / (3.6 * (10**15))
+    )
     # display(output_data[ComponentType.line]["loading"])
     # display(max_loading)
     # display(max_loading_timestamp)
