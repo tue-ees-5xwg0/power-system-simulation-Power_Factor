@@ -46,7 +46,7 @@ def check_cycle(edge_enabled, edge_vertex_id_pairs):
         raise GraphCycleError("Graph contains a cycle")
 
 
-def check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs):
+def check_connect(vertex_ids, edge_enabled, edge_vertex_id_pairs):
     size = len(vertex_ids)
     sparseMatrix = [[0 for i in range(size)] for j in range(size)]
     for i in range(size):
