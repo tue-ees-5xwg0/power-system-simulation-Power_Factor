@@ -195,7 +195,6 @@ def N_minus_one_calculation(id_to_disconnect):
     status_list = list(df["to_status"].tolist()) + list(
         input_data[ComponentType.transformer]["to_status"].tolist()
     )  # add transformer connection status to list of lines' statuses
-    status_list_True_False = list(bool(num) for num in status_list)
     line_id_list = df["id"].tolist()
     new_id = (df["id"].iloc[-1] + 1).tolist()
     line_id_list.append(new_id)  # add another line id to mimic the transformer connection
@@ -203,10 +202,9 @@ def N_minus_one_calculation(id_to_disconnect):
     # print(line_id_list)
     # print(line_nodes_id_pairs)
     # print(status_list)
-    # print(status_list_True_False)
     # print(meta_data['mv_source_node'])
     print(
-        f"To make the grid fully connected, the following lines need to be connected: {find_alternative_lines(input_data[ComponentType.node]['id'].tolist(), line_id_list, line_nodes_id_pairs, status_list_True_False, meta_data['mv_source_node'],id_to_disconnect)}"
+        f"To make the grid fully connected, the following lines need to be connected: {find_alternative_lines(input_data[ComponentType.node]['id'].tolist(), line_id_list, line_nodes_id_pairs, status_list, meta_data['mv_source_node'],id_to_disconnect)}"
     )  # find alternative currently disconnected lines to make the grid fully connected
 
 
