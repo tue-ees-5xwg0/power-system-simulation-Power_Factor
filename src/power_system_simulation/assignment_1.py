@@ -145,7 +145,7 @@ class GraphProcessor(nx.Graph):
         check_found_pairs(edge_vertex_id_pairs, vertex_ids)
         check_length_enabled(edge_enabled, edge_ids)
         check_found_source(source_vertex_id, vertex_ids)
-        check_connect(vertex_ids, edge_ids, edge_enabled, edge_vertex_id_pairs)
+        check_connect(vertex_ids, edge_enabled, edge_vertex_id_pairs)
         check_cycle(edge_enabled, edge_vertex_id_pairs)
 
         self.source_vertex_id = source_vertex_id
