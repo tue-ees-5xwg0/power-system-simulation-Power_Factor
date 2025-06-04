@@ -132,26 +132,23 @@ def power_flow_calc(active_power_profile,alt_lines_list,line_id_list):
         input_data[ComponentType.line]['to_status'][k]=1
         model=PowerGridModel(input_data=input_data)
         result = model.calculate_power_flow(update_data=update_data,calculation_method=CalculationMethod.newton_raphson)
-        print(alt_lines_list[k])
-        print(result)
+        #print(alt_lines_list[k])
+        #print(result)
         ids = np.unique(result[ComponentType.line]["id"])
         max_loading = np.zeros(len(ids))
         max_loading_timestamp = np.zeros(len(ids), dtype=object)
         temp_max=-99999999
-        temp_ind=0
-        temp_line=0
         for i in range(len(ids)):
             max_loading[i] = result[ComponentType.line]["loading"][:, i].max()
-            if(max_loading[i]>temp_max):
-                temp_max=max_loading[i]
-                temp_ind=i
-                #temp_line=output_data[ComponentType.line]['id']
             for j in range(len(active_power_profile.index)):
                 if max_loading[i] == result[ComponentType.line]["loading"][j, i]:
                     max_loading_timestamp[i] = active_power_profile.index[j]
-        max_loading_alt[k]=temp_max
-        max_loading_timestamp[k]=max_loading_timestamp[temp_ind]
-        max_line_alt[k]=0
+                    if(max_loading[i]>temp_max):
+                        temp_max=max_loading[i]
+                        max_loading_alt[k]=max_loading[i]
+                        max_line_alt[k]=result[ComponentType.line]['id'][j,i]
+                        max_loading_timestamp_alt[k]=active_power_profile.index[j]
+                        #print(active_power_profile.index[j])
         input_data[ComponentType.line]['from_status'][k]=0
         input_data[ComponentType.line]['to_status'][k]=0
 
