@@ -113,6 +113,55 @@ def find_alternative_lines(
     test = a1.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
     return test.find_alternative_edges(id_to_disconnect)
 
+def power_flow_calc(active_power_profile,alt_lines_list,line_id_list):
+
+    load_profile_active = initialize_array(DatasetType.update, ComponentType.sym_load, active_power_profile.shape)
+    load_profile_active["id"] = active_power_profile.columns.to_numpy()
+    load_profile_active["p_specified"] = active_power_profile.to_numpy()
+    load_profile_active["q_specified"] = 0.0
+    update_data = {ComponentType.sym_load: load_profile_active}
+
+    input_data[ComponentType.line]['from_status'][line_id_list.index(id_to_disconnect)]=0
+    input_data[ComponentType.line]['to_status'][line_id_list.index(id_to_disconnect)]=0
+    
+    max_loading_alt=np.zeros(len(alt_lines_list))
+    max_line_alt=np.zeros(len(alt_lines_list))
+    max_loading_timestamp_alt=np.zeros(len(alt_lines_list), dtype=object)
+    for k in range(len(alt_lines_list)):
+        input_data[ComponentType.line]['from_status'][k]=1
+        input_data[ComponentType.line]['to_status'][k]=1
+        model=PowerGridModel(input_data=input_data)
+        result = model.calculate_power_flow(update_data=update_data,calculation_method=CalculationMethod.newton_raphson)
+        print(alt_lines_list[k])
+        print(result)
+        ids = np.unique(result[ComponentType.line]["id"])
+        max_loading = np.zeros(len(ids))
+        max_loading_timestamp = np.zeros(len(ids), dtype=object)
+        temp_max=-99999999
+        temp_ind=0
+        temp_line=0
+        for i in range(len(ids)):
+            max_loading[i] = result[ComponentType.line]["loading"][:, i].max()
+            if(max_loading[i]>temp_max):
+                temp_max=max_loading[i]
+                temp_ind=i
+                #temp_line=output_data[ComponentType.line]['id']
+            for j in range(len(active_power_profile.index)):
+                if max_loading[i] == result[ComponentType.line]["loading"][j, i]:
+                    max_loading_timestamp[i] = active_power_profile.index[j]
+        max_loading_alt[k]=temp_max
+        max_loading_timestamp[k]=max_loading_timestamp[temp_ind]
+        max_line_alt[k]=0
+        input_data[ComponentType.line]['from_status'][k]=0
+        input_data[ComponentType.line]['to_status'][k]=0
+
+    output_data=pd.DataFrame()
+    output_data['Alternative line ID']=alt_lines_list
+    output_data['Max_loading']=max_loading_alt
+    output_data['Max_line_id']=max_line_alt
+    output_data['Max_timestamp']=max_loading_timestamp_alt
+    display(output_data)
+    return output_data
 
 def input_data_validity_check(input_data, meta_data):
 
@@ -203,9 +252,13 @@ def N_minus_one_calculation(id_to_disconnect):
     # print(line_nodes_id_pairs)
     # print(status_list)
     # print(meta_data['mv_source_node'])
+    alt_lines_list=find_alternative_lines(input_data[ComponentType.node]['id'].tolist(), line_id_list, line_nodes_id_pairs, status_list, meta_data['mv_source_node'],id_to_disconnect)
     print(
-        f"To make the grid fully connected, the following lines need to be connected: {find_alternative_lines(input_data[ComponentType.node]['id'].tolist(), line_id_list, line_nodes_id_pairs, status_list, meta_data['mv_source_node'],id_to_disconnect)}"
+        f"To make the grid fully connected, the following lines need to be connected: {alt_lines_list}"
     )  # find alternative currently disconnected lines to make the grid fully connected
+
+
+    power_flow_calc(active_power_profile,alt_lines_list,line_id_list)
 
 
 with open("data/assignment 3 input/input_network_data.json") as fp:
