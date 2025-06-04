@@ -110,8 +110,8 @@ def check_line_id_connected(fr, to):
 def find_alternative_lines(
     vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id, id_to_disconnect
 ):
-    test = a1.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
-    return test.find_alternative_edges(id_to_disconnect)
+    test = a1.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id) #create a graph from the provided data about nodes and lines
+    return test.find_alternative_edges(id_to_disconnect) #find the alternative edges to make the graph fully connected, when the line is disconnected
 
 def power_flow_calc(active_power_profile,alt_lines_list,line_id_list):
 
@@ -121,17 +121,17 @@ def power_flow_calc(active_power_profile,alt_lines_list,line_id_list):
     load_profile_active["q_specified"] = 0.0
     update_data = {ComponentType.sym_load: load_profile_active}
 
-    input_data[ComponentType.line]['from_status'][line_id_list.index(id_to_disconnect)]=0
-    input_data[ComponentType.line]['to_status'][line_id_list.index(id_to_disconnect)]=0
+    input_data[ComponentType.line]['from_status'][line_id_list.index(id_to_disconnect)]=0 #disconnect the line that the user wants to disconnect
+    input_data[ComponentType.line]['to_status'][line_id_list.index(id_to_disconnect)]=0 #disconnect the line that the user wants to disconnect
     
-    max_loading_alt=np.zeros(len(alt_lines_list))
-    max_line_alt=np.zeros(len(alt_lines_list))
-    max_loading_timestamp_alt=np.zeros(len(alt_lines_list), dtype=object)
+    max_loading_alt=np.zeros(len(alt_lines_list)) #initialize max_loading column values
+    max_line_alt=np.zeros(len(alt_lines_list)) #initialize max_line_alt column values
+    max_loading_timestamp_alt=np.zeros(len(alt_lines_list), dtype=object) #initialize max_loading_timestamp column values
     for k in range(len(alt_lines_list)):
-        input_data[ComponentType.line]['from_status'][k]=1
-        input_data[ComponentType.line]['to_status'][k]=1
+        input_data[ComponentType.line]['from_status'][k]=1 
+        input_data[ComponentType.line]['to_status'][k]=1  #connect the kth alternative line
         model=PowerGridModel(input_data=input_data)
-        result = model.calculate_power_flow(update_data=update_data,calculation_method=CalculationMethod.newton_raphson)
+        result = model.calculate_power_flow(update_data=update_data,calculation_method=CalculationMethod.newton_raphson) #perform the power flow analysis when the kth line is connected
         #print(alt_lines_list[k])
         #print(result)
         ids = np.unique(result[ComponentType.line]["id"])
@@ -150,9 +150,9 @@ def power_flow_calc(active_power_profile,alt_lines_list,line_id_list):
                         max_loading_timestamp_alt[k]=active_power_profile.index[j]
                         #print(active_power_profile.index[j])
         input_data[ComponentType.line]['from_status'][k]=0
-        input_data[ComponentType.line]['to_status'][k]=0
+        input_data[ComponentType.line]['to_status'][k]=0 #disconnect kth line
 
-    output_data=pd.DataFrame()
+    output_data=pd.DataFrame() #generate specified table from assignment 3
     output_data['Alternative line ID']=alt_lines_list
     output_data['Max_loading']=max_loading_alt
     output_data['Max_line_id']=max_line_alt
@@ -162,101 +162,43 @@ def power_flow_calc(active_power_profile,alt_lines_list,line_id_list):
 
 def input_data_validity_check(input_data, meta_data):
 
-    assert_valid_input_data(
-        input_data=input_data, calculation_type=CalculationType.power_flow
-    )  # check if input data is valid
+    assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)  # check if input data is valid
     check_source_transformer(meta_data)  # check if LV grid has exactly one transformer, and one source.
+
     # print(type(input_data)) #dict
     print(input_data)  # ComponentType.line
-    check_valid_LV_ids(
-        meta_data["lv_feeders"], input_data[ComponentType.line]["id"]
-    )  # check if All IDs in the LV Feeder IDs are valid line IDs
 
-    check_line_transformer_nodes(
-        df[df["id"].isin(meta_data["lv_feeders"])]["from_node"].tolist(),
-        input_data[ComponentType.transformer]["to_node"],
-    )  # check if all the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
+    check_valid_LV_ids(meta_data["lv_feeders"], input_data[ComponentType.line]["id"])  # check if All IDs in the LV Feeder IDs are valid line IDs
+    check_line_transformer_nodes(df[df["id"].isin(meta_data["lv_feeders"])]["from_node"].tolist(),input_data[ComponentType.transformer]["to_node"],)  # check if all the lines in the LV Feeder IDs have the from_node the same as the to_node of the transformer
 
-    transformer_tuple = list(
-        zip(
-            input_data[ComponentType.transformer]["from_node"].tolist(),
-            input_data[ComponentType.transformer]["to_node"].tolist(),
-        )
-    )  # transformer also connects two nodes
-    line_nodes_id_pairs = (
-        list(
-            zip(
-                input_data[ComponentType.line]["from_node"].tolist(), input_data[ComponentType.line]["to_node"].tolist()
-            )
-        )
-        + transformer_tuple
-    )  # add nodes connected by transformer to list of lines connecting nodes
-    status_list = list(input_data[ComponentType.line]["to_status"].tolist()) + list(
-        input_data[ComponentType.transformer]["to_status"].tolist()
-    )  # add transformer connection status to list of lines' statuses
-    a1.check_connect(
-        input_data[ComponentType.node]["id"], status_list, line_nodes_id_pairs
-    )  # check if the grid is fully connected in the initial state
+    transformer_tuple = list(zip(input_data[ComponentType.transformer]["from_node"].tolist(),input_data[ComponentType.transformer]["to_node"].tolist(),))  # transformer also connects two nodes
+    line_nodes_id_pairs = (list(zip(input_data[ComponentType.line]["from_node"].tolist(), input_data[ComponentType.line]["to_node"].tolist()))+transformer_tuple)  # add nodes connected by transformer to list of lines connecting nodes
+    status_list = list(input_data[ComponentType.line]["to_status"].tolist()) + list(input_data[ComponentType.transformer]["to_status"].tolist())  # add transformer connection status to list of lines' statuses
+    
+    a1.check_connect(input_data[ComponentType.node]["id"], status_list, line_nodes_id_pairs)  # check if the grid is fully connected in the initial state
     a1.check_cycle(status_list, line_nodes_id_pairs)  # check if the grid has no cycles in the initial state
 
-    # print(active_power_profile)
-    # print(reactive_power_profile)
-    # print(ev_active_power_profile)
-    # print(input_data[ComponentType.sym_load]['id'],active_power_profile.columns,reactive_power_profile.columns)
-    check_timestamps(
-        active_power_profile.index, reactive_power_profile.index, ev_active_power_profile.index
-    )  # checks if timestamps are matching
-    check_profile_ids(
-        active_power_profile.columns, reactive_power_profile.columns
-    )  # checks if number of active and reactive profiles are matching
-    check_symload_ids(
-        active_power_profile.columns, reactive_power_profile.columns, input_data[ComponentType.sym_load]["id"]
-    )  # checks if IDs are matching
-    check_number_of_ev_profiles(
-        ev_active_power_profile.columns, input_data[ComponentType.sym_load]["id"]
-    )  # checks if number of EV profiles does not exceed number of sym_loads
-
-    # DOUBLE CHECK check_number_of_ev_profiles FUNCTION!!!
-
+    check_timestamps(active_power_profile.index, reactive_power_profile.index, ev_active_power_profile.index) # checks if timestamps are matching
+    check_profile_ids(active_power_profile.columns, reactive_power_profile.columns)  # checks if number of active and reactive profiles are matching
+    check_symload_ids(active_power_profile.columns, reactive_power_profile.columns, input_data[ComponentType.sym_load]["id"])  # checks if IDs are matching
+    check_number_of_ev_profiles(ev_active_power_profile.columns, input_data[ComponentType.sym_load]["id"])  # checks if number of EV profiles does not exceed number of sym_loads
 
 def N_minus_one_calculation(id_to_disconnect):
+
     check_valid_line_ids(id_to_disconnect, input_data[ComponentType.line]["id"])  # check if ID is valid
-    check_line_id_connected(
-        df[df["id"] == id_to_disconnect]["from_status"].tolist(), df[df["id"] == id_to_disconnect]["to_status"].tolist()
-    )  # check if line with selected ID is connected
-    transformer_tuple = list(
-        zip(
-            input_data[ComponentType.transformer]["from_node"].tolist(),
-            input_data[ComponentType.transformer]["to_node"].tolist(),
-        )
-    )  # transformer also connects two nodes
-    line_nodes_id_pairs = (
-        list(
-            zip(
-                input_data[ComponentType.line]["from_node"].tolist(), input_data[ComponentType.line]["to_node"].tolist()
-            )
-        )
-        + transformer_tuple
-    )  # add nodes connected by transformer to list of lines connecting nodes
-    status_list = list(df["to_status"].tolist()) + list(
-        input_data[ComponentType.transformer]["to_status"].tolist()
-    )  # add transformer connection status to list of lines' statuses
+    check_line_id_connected(df[df["id"] == id_to_disconnect]["from_status"].tolist(), df[df["id"] == id_to_disconnect]["to_status"].tolist()) #check if line with selected ID is connected
+    
+    transformer_tuple = list(zip(input_data[ComponentType.transformer]["from_node"].tolist(),input_data[ComponentType.transformer]["to_node"].tolist()))  # transformer also connects two nodes
+    line_nodes_id_pairs = (list(zip(input_data[ComponentType.line]["from_node"].tolist(), input_data[ComponentType.line]["to_node"].tolist()))+transformer_tuple)# add nodes connected by transformer to list of lines connecting nodes
+    status_list = list(df["to_status"].tolist())+list(input_data[ComponentType.transformer]["to_status"].tolist())  # add transformer connection status to list of lines' statuses
     line_id_list = df["id"].tolist()
     new_id = (df["id"].iloc[-1] + 1).tolist()
     line_id_list.append(new_id)  # add another line id to mimic the transformer connection
-    # print(input_data[ComponentType.node]['id'].tolist())
-    # print(line_id_list)
-    # print(line_nodes_id_pairs)
-    # print(status_list)
-    # print(meta_data['mv_source_node'])
     alt_lines_list=find_alternative_lines(input_data[ComponentType.node]['id'].tolist(), line_id_list, line_nodes_id_pairs, status_list, meta_data['mv_source_node'],id_to_disconnect)
-    print(
-        f"To make the grid fully connected, the following lines need to be connected: {alt_lines_list}"
-    )  # find alternative currently disconnected lines to make the grid fully connected
-
-
-    power_flow_calc(active_power_profile,alt_lines_list,line_id_list)
-
+    
+    print(f"To make the grid fully connected, the following lines need to be connected: {alt_lines_list}")  # find alternative currently disconnected lines to make the grid fully connected
+    
+    power_flow_calc(active_power_profile,alt_lines_list,line_id_list) 
 
 with open("data/assignment 3 input/input_network_data.json") as fp:
     data = fp.read()
@@ -291,11 +233,9 @@ dtype = {
         "i_n",
     ]
 }
-df = pd.DataFrame(
-    input_data[ComponentType.line], columns=dtype["names"]
-)  # get the data for the lines of the grid as a dataframe
+df = pd.DataFrame(input_data[ComponentType.line], columns=dtype["names"])  # get the data for the lines of the grid as a dataframe
 
-input_data_validity_check(input_data, meta_data)
+input_data_validity_check(input_data, meta_data) #check data validity
 id_to_disconnect = 22
-N_minus_one_calculation(id_to_disconnect)
+N_minus_one_calculation(id_to_disconnect) #Implement the "N-1 calculation" functionality
 pass
