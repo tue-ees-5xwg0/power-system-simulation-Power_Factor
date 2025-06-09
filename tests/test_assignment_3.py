@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -107,7 +108,7 @@ def test_check_line_id_connected():
     assert str(excinfo.value) == "Line ID not connected at both sides in the base case"
 
 
-test_check_line_id_connected()
+# test_check_line_id_connected()
 
 
 def test_find_alternative_lines():
@@ -134,7 +135,7 @@ def test_find_alternative_lines():
 #     active_power_profile=pd.read_parquet("data/assignment 3 input/active_power_profile.parquet")
 #     alt_lines_list=[24]
 #     line_id_list=[16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
-#     output_data=pd.DataFrame() #generate specified table from assignment 3
+#     output_data=pd.DataFrame()
 #     output_data['Alternative line ID']=24
 #     output_data['Max_loading']=0.001631
 #     output_data['Max_line_id']=17.0
