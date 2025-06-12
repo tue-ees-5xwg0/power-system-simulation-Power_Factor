@@ -76,8 +76,8 @@ def prepare_update_data(active_batch_profile: pd.DataFrame, reactive_batch_profi
         load_profile["q_specified"] = data_reactive
     else:
         raise ValueError(f"Unknown profile_type '{profile_type}', must be 'active' or 'reactive'")
-    display("Load profile")
-    display(load_profile.dtype.names)
+    # display("Load profile")
+    # display(load_profile.dtype.names)
     return { ComponentType.sym_load: load_profile }
 
 
