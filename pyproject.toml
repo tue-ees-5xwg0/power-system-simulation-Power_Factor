@@ -30,7 +30,9 @@ dev = [
   'black',
   'isort',
   'pylint',
-  'pytest-cov'
+  'pytest-cov',
+  'pyarrow',
+  'fastparquet'
 ]
 
 # add more dependencies for running the examples
