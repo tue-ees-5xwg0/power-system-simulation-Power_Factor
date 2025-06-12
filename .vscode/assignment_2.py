@@ -47,9 +47,7 @@ def load_batch_profiles(active_profile_path: str, reactive_profile_path: str):
     return active_power_profile, reactive_power_profile
 
 
-def prepare_update_data(
-    active_batch_profile: pd.DataFrame, reactive_batch_profile: pd.DataFrame, profile_type: str = "active"
-):
+def prepare_update_data(active_batch_profile: pd.DataFrame, reactive_batch_profile: pd.DataFrame, profile_type: str = "active"):
     """
     Given a DataFrame of power profile indexed by timestamps and columns=IDs,
     build the update_data dict for sym_load.
@@ -78,8 +76,10 @@ def prepare_update_data(
         load_profile["q_specified"] = data_reactive
     else:
         raise ValueError(f"Unknown profile_type '{profile_type}', must be 'active' or 'reactive'")
+    display("Load profile")
+    display(load_profile.dtype.names)
+    return { ComponentType.sym_load: load_profile }
 
-    return {ComponentType.sym_load: load_profile}
 
 
 def calculate_power_flow(input_data, update_data):
@@ -115,6 +115,7 @@ def calculate_node_stats(output_data, batch_profile: pd.DataFrame):
     min_voltage_id = np.zeros(n, dtype=int)
     max_voltage_id = np.zeros(n, dtype=int)
 
+
     # output_data[ComponentType.node]["u_pu"] assumed shape (timestamps, nodes)
     u_pu = output_data[ComponentType.node]["u_pu"]
     # For each timestamp index i, find min/max along the node axis
@@ -128,15 +129,13 @@ def calculate_node_stats(output_data, batch_profile: pd.DataFrame):
         min_voltage_id[i] = min_idx + 1
         max_voltage_id[i] = max_idx + 1
 
-    output_node = pd.DataFrame(
-        {
-            "id": ids_node,
-            "Max_voltage": max_voltage,
-            "Max_voltage_node": max_voltage_id,
-            "Min_voltage": min_voltage,
-            "Min_voltage_node": min_voltage_id,
-        }
-    )
+    output_node = pd.DataFrame({
+        "id": ids_node,
+        "Max_voltage": max_voltage,
+        "Max_voltage_node": max_voltage_id,
+        "Min_voltage": min_voltage,
+        "Min_voltage_node": min_voltage_id,
+    })
     return output_node
 
 
@@ -178,16 +177,14 @@ def calculate_line_stats(output_data, batch_profile: pd.DataFrame):
     p_to = output_data[ComponentType.line]["p_to"]
     total_loss = np.trapezoid(p_from + p_to, dx=3600 * (10**9), axis=0) / (3.6 * (10**15))
 
-    output_line = pd.DataFrame(
-        {
-            "id": ids,
-            "Total_loss": total_loss,
-            "Max_loading": max_loading,
-            "Max_loading_timestamp": max_loading_timestamp,
-            "Min_loading": min_loading,
-            "Min_loading_timestamp": min_loading_timestamp,
-        }
-    )
+    output_line = pd.DataFrame({
+        "id": ids,
+        "Total_loss": total_loss,
+        "Max_loading": max_loading,
+        "Max_loading_timestamp": max_loading_timestamp,
+        "Min_loading": min_loading,
+        "Min_loading_timestamp": min_loading_timestamp,
+    })
     return output_line
 
 
@@ -273,7 +270,7 @@ def main():
     # display(active_power_profile)
     # display(reactive_power_profile)
     # Prepare update_data for active profile, you can also add reactive now
-    update_data = prepare_update_data(active_power_profile, reactive_power_profile, profile_type="both")
+    update_data = prepare_update_data(active_power_profile, reactive_power_profile, profile_type="both")    
     display(update_data)
     # Run the analysis
     power_flow_results(update_data, active_power_profile)

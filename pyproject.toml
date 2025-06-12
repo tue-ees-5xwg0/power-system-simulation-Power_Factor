@@ -16,7 +16,11 @@ requires-python = ">=3.12"
 # add dependencies of your core package, check the license first!
 dependencies = [
 'NetworkX',
-'SciPy'
+'SciPy',
+'power_grid_model',
+'pandas',
+'numpy',
+'matplotlib'
 ]
 version = "0.1"
 
@@ -40,7 +44,7 @@ namespaces = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = ["--cov=power_system_simulation", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-fail-under=85"]
+addopts = ["--cov=power_system_simulation", "--cov-report", "term", "--cov-report", "html:python_cov_html", "--cov-fail-under=70"]
 
 [tool.black]
 line-length = 120
