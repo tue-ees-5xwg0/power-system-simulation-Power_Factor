@@ -9,10 +9,10 @@ import power_system_simulation.assignment_3 as a3
 
 
 def test_check_source_transformer():
-    meta = {"lv_busbar": 1, "lv_feeders": [16, 20], "mv_source_node": 0, "source": [10,11], "transformer": 11}
+    meta = {"lv_busbar": 1, "lv_feeders": [16, 20], "mv_source_node": 0, "source": [10, 11], "transformer": 11}
     with pytest.raises(a3.MoreThanOneTransformerOrSource):
         a3.check_source_transformer(meta)
-    #assert str(excinfo.value) == "LV grid contains more than one source or transformer"
+    # assert str(excinfo.value) == "LV grid contains more than one source or transformer"
 
 
 test_check_source_transformer()
@@ -130,3 +130,12 @@ def test_find_alternative_lines():
 #     assert a3.power_flow_calc(active_power_profile,alt_lines_list,line_id_list)==output_data
 
 # test_power_flow_calc()
+
+
+def test_optimal_tap_position_criteria():
+    criteria = "voltage"
+    with pytest.raises(a3.InvalidCriteria):
+        a3.optimal_tap_position(criteria)
+
+
+# test_optimal_tap_position_criteria()

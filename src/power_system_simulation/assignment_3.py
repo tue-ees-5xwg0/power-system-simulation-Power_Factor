@@ -17,6 +17,7 @@ from power_grid_model.utils import json_deserialize, json_serialize
 from power_grid_model.validation import ValidationException, assert_valid_batch_data, assert_valid_input_data
 
 import power_system_simulation.assignment_1 as a1
+import power_system_simulation.assignment_2 as a2
 
 
 class MoreThanOneTransformerOrSource(Exception):
@@ -53,6 +54,10 @@ class InvalidLineIds(Exception):
 
 class NonConnnected(Exception):
     "Raised when the given Line ID is not connected at both sides in the base case"
+
+
+class InvalidCriteria(Exception):
+    "Raised when the criteria for optimal tap position is not valid. Use 'Voltage_deviation' or 'Total_loss'."
 
 
 def check_source_transformer(meta_data):
@@ -224,6 +229,50 @@ def input_data_validity_check(input_data, meta_data):
     )  # checks if number of EV profiles does not exceed number of sym_loads
 
 
+def optimal_tap_position(criteria):
+    if criteria not in ["Voltage_deviation", "Total_loss"]:
+        raise InvalidCriteria("Invalid criteria specified. Use 'Voltage_deviation' or 'Total_loss'.")
+
+    transformer_data = input_data[ComponentType.transformer]
+    tap_min, tap_max = int(transformer_data["tap_min"][0]), int(transformer_data["tap_max"][0])
+    tap_steps = list(range(tap_max, tap_min + 1))
+    # display("tap_min:", tap_min)
+    # display("tap_max:", tap_max)
+    # display("tap_steps:", tap_steps)
+    id = transformer_data["id"]
+    total_loss = []
+    total_deviation = []
+    for tap in tap_steps:
+        update_data = a2.prepare_update_data(active_power_profile, reactive_power_profile, tap, id, "both")
+        output_data = a2.calculate_power_flow(input_data, update_data)
+
+        output_line = a2.calculate_line_stats(output_data, active_power_profile)
+        output_node = a2.calculate_node_stats(output_data, active_power_profile)
+        # a2.display_results(output_node, output_line)
+
+        total_loss.append(output_line["Total_loss"].sum())
+
+        deviation_max = abs(output_node["Max_voltage"] - 1).sum()
+        deviation_min = abs(output_node["Min_voltage"] - 1).sum()
+        total_deviation.append(
+            (deviation_max + deviation_min) / (len(output_node) * 2)
+        )  # Divide total deviation by number of nodes (max and min) and number of timestamps
+
+    if criteria == "Voltage_deviation":
+        display("Optimal tap position based on voltage deviation:")
+        optimal_tap = tap_steps[np.argmin(total_deviation)]
+        display(f"Optimal tap position: {optimal_tap}, with total deviation: {min(total_deviation)}")
+        # display("Total deviation for each tap position:")
+        # display(pd.DataFrame({"tap_position": tap_steps, "total_deviation": total_deviation}))
+
+    elif criteria == "Total_loss":
+        display("Optimal tap position based on total loss:")
+        optimal_tap = tap_steps[np.argmin(total_loss)]
+        display(f"Optimal tap position: {optimal_tap}, with total loss: {min(total_loss)}")
+        # display("Total losses for each tap position:")
+        # display(pd.DataFrame({"tap_position": tap_steps, "total_loss": total_loss}))
+
+
 def N_minus_one_calculation(id_to_disconnect):
 
     check_valid_line_ids(id_to_disconnect, input_data[ComponentType.line]["id"])  # check if ID is valid
@@ -305,5 +354,6 @@ df = pd.DataFrame(
 )  # get the data for the lines of the grid as a dataframe
 
 input_data_validity_check(input_data, meta_data)  # check data validity
+optimal_tap_position("Voltage_deviation")
 id_to_disconnect = 22
 N_minus_one_calculation(id_to_disconnect)  # Implement the "N-1 calculation" functionality
