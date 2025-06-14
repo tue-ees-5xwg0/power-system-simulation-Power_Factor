@@ -1,4 +1,3 @@
-# some basic imports
 import json
 import pprint
 
@@ -7,15 +6,11 @@ import numpy as np
 import pandas as pd
 from IPython.display import display
 from power_grid_model import (
-    BranchSide,
     CalculationMethod,
     CalculationType,
     ComponentType,
     DatasetType,
-    LoadGenType,
-    MeasuredTerminalType,
     PowerGridModel,
-    TapChangingStrategy,
     initialize_array,
 )
 from power_grid_model.utils import json_deserialize, json_serialize
@@ -312,4 +307,3 @@ df = pd.DataFrame(
 input_data_validity_check(input_data, meta_data)  # check data validity
 id_to_disconnect = 22
 N_minus_one_calculation(id_to_disconnect)  # Implement the "N-1 calculation" functionality
-pass

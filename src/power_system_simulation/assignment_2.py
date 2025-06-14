@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from IPython.display import display
-from pandas import DataFrame
 from power_grid_model import (
     CalculationMethod,
     CalculationType,
@@ -141,7 +140,7 @@ except:
 
 # print("components:", list(input_data.keys()))
 # display(input_data[ComponentType.line]["from_node"])
-display(DataFrame(input_data[ComponentType.line]))
+display(pd.DataFrame(input_data[ComponentType.line]))
 
 # Read the batch data (update data) and transform it into a DataFrame
 active_power_profile = pd.read_parquet(
