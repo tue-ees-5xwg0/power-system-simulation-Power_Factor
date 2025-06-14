@@ -215,7 +215,6 @@ class GraphProcessor(nx.Graph):
             downstream_root = v if depth.get(v, 0) > depth.get(u, 0) else u
 
         descendants = list(nx.descendants(self.dfs_tree, downstream_root))
-        print([downstream_root] + descendants)
         return [downstream_root] + descendants
         # put your implementation here
 
