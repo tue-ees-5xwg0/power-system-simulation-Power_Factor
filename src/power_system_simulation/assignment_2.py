@@ -87,7 +87,7 @@ def prepare_update_data(
     reactive_batch_profile: pd.DataFrame,
     tap_pos: int = -1,
     transformer_id: int = -1,
-    profile_type: str = "active"
+    profile_type: str = "active",
 ):
     """
     Given:
@@ -100,9 +100,7 @@ def prepare_update_data(
       2) transformer (id, tap_pos, from_status, to_status)
     """
     # 1) build sym_load update
-    load_profile = initialize_array(DatasetType.update,
-                                    ComponentType.sym_load,
-                                    active_batch_profile.shape)
+    load_profile = initialize_array(DatasetType.update, ComponentType.sym_load, active_batch_profile.shape)
 
     # assign the sym_load IDs
     ids = active_batch_profile.columns.to_numpy()
@@ -112,7 +110,7 @@ def prepare_update_data(
         load_profile["id"] = np.array(ids, dtype=object)
 
     # fill p_specified / q_specified
-    data_active   = active_batch_profile.to_numpy()
+    data_active = active_batch_profile.to_numpy()
     data_reactive = reactive_batch_profile.to_numpy()
     if profile_type == "active":
         load_profile["p_specified"] = data_active
@@ -127,7 +125,7 @@ def prepare_update_data(
         raise ValueError(f"Unknown profile_type '{profile_type}', must be 'active', 'reactive', or 'both'")
 
     # start composing the return dict
-    update_data = { ComponentType.sym_load: load_profile }
+    update_data = {ComponentType.sym_load: load_profile}
 
     # 2) optionally build transformer update
     if transformer_id >= 0:
@@ -143,10 +141,9 @@ def prepare_update_data(
         transformer_update["tap_pos"] = tap_pos
 
         # add to update_data
-        update_data[ComponentType.transformer] = transformer_update        
+        update_data[ComponentType.transformer] = transformer_update
 
     return update_data
-
 
 
 def calculate_power_flow(input_data, update_data):

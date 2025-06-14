@@ -5,13 +5,14 @@ import pandas as pd
 import pytest
 
 import power_system_simulation.assignment_1 as a1
+
 # import power_system_simulation.assignment_2 as a2
 import power_system_simulation.assignment_3 as a3
 
 
 def test_check_source_transformer():
     meta = {"lv_busbar": 1, "lv_feeders": [16, 20], "mv_source_node": 0, "source": 10, "transformer": 11}
-    with pytest.raises(a3.MoreThanOneTransformerOrSource) :
+    with pytest.raises(a3.MoreThanOneTransformerOrSource):
         a3.check_source_transformer(meta)
 
 
@@ -21,7 +22,7 @@ def test_check_source_transformer():
 def test_check_valid_LV_ids():
     LV_ids = [15, 20]
     Line_ids = [16, 17, 18, 19, 20, 21, 22, 23, 24]
-    with pytest.raises(a3.InvalidLVIds) :
+    with pytest.raises(a3.InvalidLVIds):
         a3.check_valid_LV_ids(LV_ids, Line_ids)
 
 
@@ -31,7 +32,7 @@ def test_check_valid_LV_ids():
 def test_check_line_transformer_nodes():
     lines_from_nodes = [1, 1]
     transformer_to_node = 2
-    with pytest.raises(a3.NonMatchingTransformerLineNodes) :
+    with pytest.raises(a3.NonMatchingTransformerLineNodes):
         a3.check_line_transformer_nodes(lines_from_nodes, transformer_to_node)
 
 
@@ -42,7 +43,7 @@ def test_check_timestamps():
     active_timestamp = pd.date_range(start="2025-06-09 08:00", end="2025-06-09 12:00", freq="h")
     reactive_timestamp = pd.date_range(start="2025-06-09 08:00", end="2025-06-09 12:00", freq="h")
     ev_timestamp = pd.date_range(start="2025-06-09 08:00", end="2025-06-09 13:00", freq="h")
-    with pytest.raises(a3.NonMatchingTimestamps) :
+    with pytest.raises(a3.NonMatchingTimestamps):
         a3.check_timestamps(active_timestamp, reactive_timestamp, ev_timestamp)
 
 
@@ -52,7 +53,7 @@ def test_check_timestamps():
 def test_check_profile_ids():
     active_ids = pd.Index(["1", "2", "4"])
     reactive_ids = pd.Index(["1", "2", "3"])
-    with pytest.raises(a3.InvalidProfileIds) :
+    with pytest.raises(a3.InvalidProfileIds):
         a3.check_profile_ids(active_ids, reactive_ids)
 
 
@@ -73,7 +74,7 @@ def test_check_symload_ids():
 def test_check_number_of_ev_profiles():
     ev_profiles = pd.Index(["1", "2", "3"])
     symload_profiles = [10, 12]
-    with pytest.raises(a3.InvalidNumberOfEVProfiles) :
+    with pytest.raises(a3.InvalidNumberOfEVProfiles):
         a3.check_number_of_ev_profiles(ev_profiles, symload_profiles)
 
 
@@ -83,7 +84,7 @@ def test_check_number_of_ev_profiles():
 def test_check_valid_line_ids():
     id = 5
     Line_ids = [1, 2, 3, 4]
-    with pytest.raises(a3.InvalidLineIds) :
+    with pytest.raises(a3.InvalidLineIds):
         a3.check_valid_line_ids(id, Line_ids)
 
 
@@ -93,7 +94,7 @@ def test_check_valid_line_ids():
 def test_check_line_id_connected():
     fr = pd.Series(1)
     to = pd.Series(0)
-    with pytest.raises(a3.NonConnnected) :
+    with pytest.raises(a3.NonConnnected):
         a3.check_line_id_connected(fr, to)
 
 
@@ -109,10 +110,10 @@ def test_find_alternative_lines():
     test = a1.GraphProcessor(vertex_ids, edge_ids, edge_vertex_id_pairs, edge_enabled, source_vertex_id)
     assert test.find_alternative_edges(22) == [24]
 
-    with pytest.raises(a1.IDNotFoundError) :
+    with pytest.raises(a1.IDNotFoundError):
         test.find_alternative_edges(26)
 
-    with pytest.raises(a1.EdgeAlreadyDisabledError) :
+    with pytest.raises(a1.EdgeAlreadyDisabledError):
         test.find_alternative_edges(24)
 
 
@@ -130,3 +131,12 @@ def test_find_alternative_lines():
 #     assert a3.power_flow_calc(active_power_profile,alt_lines_list,line_id_list)==output_data
 
 # test_power_flow_calc()
+
+
+def test_optimal_tap_position_criteria():
+    criteria = "voltage"
+    with pytest.raises(a3.InvalidCriteria):
+        a3.optimal_tap_position(criteria)
+
+
+test_optimal_tap_position_criteria()
