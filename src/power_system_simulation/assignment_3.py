@@ -316,20 +316,20 @@ def N_minus_one_calculation(id_to_disconnect):
     power_flow_calc(active_power_profile, alt_lines_list, line_id_list)
 
 
-with open("data/assignment 3 input/input_network_data.json") as fp:
+with open("data/assignment_3_input/input_network_data.json") as fp:
     data = fp.read()
 
 input_data = json_deserialize(data)
 
-with open("data/assignment 3 input/meta_data.json") as fp:
+with open("data/assignment_3_input/meta_data.json") as fp:
     meta = fp.read()
 
 meta_data = json.loads(meta)
 pprint.pprint(meta_data)
 
-active_power_profile = pd.read_parquet("data/assignment 3 input/active_power_profile.parquet")
-reactive_power_profile = pd.read_parquet("data/assignment 3 input/reactive_power_profile.parquet")
-ev_active_power_profile = pd.read_parquet("data/assignment 3 input/ev_active_power_profile.parquet")
+active_power_profile = pd.read_parquet("data/assignment_3_input/active_power_profile.parquet")
+reactive_power_profile = pd.read_parquet("data/assignment_3_input/reactive_power_profile.parquet")
+ev_active_power_profile = pd.read_parquet("data/assignment_3_input/ev_active_power_profile.parquet")
 
 dtype = {
     "names": [
