@@ -165,6 +165,13 @@ def power_flow_calc(active_power_profile, alt_lines_list, line_id_list):
         input_data[ComponentType.line]["from_status"][k] = 0
         input_data[ComponentType.line]["to_status"][k] = 0  # disconnect kth line
 
+    input_data[ComponentType.line]["from_status"][
+        line_id_list.index(id_to_disconnect)
+    ] = 1  # reconnect the line that the user wants to disconnect
+    input_data[ComponentType.line]["to_status"][
+        line_id_list.index(id_to_disconnect)
+    ] = 1  # reconnect the line that the user wants to disconnect
+    
     output_data = pd.DataFrame()  # generate specified table from assignment 3
     output_data["Alternative line ID"] = alt_lines_list
     output_data["Max_loading"] = max_loading_alt

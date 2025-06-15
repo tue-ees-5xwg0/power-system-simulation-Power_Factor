@@ -222,11 +222,12 @@ class GraphProcessor(nx.Graph):
         ans = []
         check_found_edges(disabled_edge_id, self.edge_ids)
         check_disabled(disabled_edge_id, self.edge_ids, self.edge_enabled)
+        #print(self.edge_vertex_id_pairs)
         H = nx.Graph()
-        for i, (u, v) in enumerate(self.edges()):
+        for i, (u, v) in enumerate(self.edge_vertex_id_pairs):
             if self.edge_enabled[i] == True and self.edge_ids[i] != disabled_edge_id:
                 H.add_edge(u, v)
-        for i, (u, v) in enumerate(self.edges):
+        for i, (u, v) in enumerate(self.edge_vertex_id_pairs):
             if self.edge_enabled[i] == False and self.edge_ids[i] != disabled_edge_id:
                 H.add_edge(u, v)
                 if nx.number_connected_components(H) == 1 and nx.is_forest(H):
