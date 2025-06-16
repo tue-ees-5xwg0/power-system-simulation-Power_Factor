@@ -317,12 +317,6 @@ def main():
         print(f"Failed to load input data: {e}")
         return
 
-    try:
-        line_df = DataFrame(input_data[ComponentType.line])
-        # display(line_df)
-    except Exception:
-        pass
-
     # Load batch profiles
     try:
         active_power_profile, reactive_power_profile = load_batch_profiles(
