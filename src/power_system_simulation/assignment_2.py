@@ -47,24 +47,69 @@ def load_batch_profiles(active_profile_path: str, reactive_profile_path: str):
     return active_power_profile, reactive_power_profile
 
 
+# def prepare_update_data(
+#     active_batch_profile: pd.DataFrame, reactive_batch_profile: pd.DataFrame, profile_type: str = "active"
+# ):
+#     """
+#     Given a DataFrame of power profile indexed by timestamps and columns=IDs,
+#     build the update_data dict for sym_load.
+#     """
+#     # initialize the underlying array
+#     load_profile = initialize_array(DatasetType.update, ComponentType.sym_load, active_batch_profile.shape)
+
+#     # assign IDs (allowing non-int IDs)
+#     ids = active_batch_profile.columns.to_numpy()
+#     try:
+#         load_profile["id"] = ids
+#     except (ValueError, TypeError):
+#         load_profile["id"] = np.array(ids, dtype=object)
+
+#     # fill the appropriate field
+#     data_active = active_batch_profile.to_numpy()
+#     data_reactive = reactive_batch_profile.to_numpy()
+#     if profile_type == "active":
+#         load_profile["p_specified"] = data_active
+#         load_profile["q_specified"] = 0.0
+#     elif profile_type == "reactive":
+#         load_profile["p_specified"] = 0.0
+#         load_profile["q_specified"] = data_reactive
+#     elif profile_type == "both":
+#         load_profile["p_specified"] = data_active
+#         load_profile["q_specified"] = data_reactive
+#     else:
+#         raise ValueError(f"Unknown profile_type '{profile_type}', must be 'active' or 'reactive'")
+
+#     return {ComponentType.sym_load: load_profile}
+
+
 def prepare_update_data(
-    active_batch_profile: pd.DataFrame, reactive_batch_profile: pd.DataFrame, profile_type: str = "active"
+    active_batch_profile: pd.DataFrame,
+    reactive_batch_profile: pd.DataFrame,
+    tap_pos: int = -1,
+    transformer_id: int = -1,
+    profile_type: str = "active",
 ):
     """
-    Given a DataFrame of power profile indexed by timestamps and columns=IDs,
-    build the update_data dict for sym_load.
+    Given:
+      - active_batch_profile: DataFrame indexed by timestamps, columns=house IDs → active p
+      - reactive_batch_profile: same shape → reactive q
+      - transformer_id: the int ID of the MV/LV transformer
+      - tap_pos: the integer tap position to use for every time step
+    Build and return the full update_data dict for:
+      1) sym_load (p_specified, q_specified)
+      2) transformer (id, tap_pos, from_status, to_status)
     """
-    # initialize the underlying array
+    # 1) build sym_load update
     load_profile = initialize_array(DatasetType.update, ComponentType.sym_load, active_batch_profile.shape)
 
-    # assign IDs (allowing non-int IDs)
+    # assign the sym_load IDs
     ids = active_batch_profile.columns.to_numpy()
     try:
         load_profile["id"] = ids
     except (ValueError, TypeError):
         load_profile["id"] = np.array(ids, dtype=object)
 
-    # fill the appropriate field
+    # fill p_specified / q_specified
     data_active = active_batch_profile.to_numpy()
     data_reactive = reactive_batch_profile.to_numpy()
     if profile_type == "active":
@@ -77,9 +122,28 @@ def prepare_update_data(
         load_profile["p_specified"] = data_active
         load_profile["q_specified"] = data_reactive
     else:
-        raise ValueError(f"Unknown profile_type '{profile_type}', must be 'active' or 'reactive'")
+        raise ValueError(f"Unknown profile_type '{profile_type}', must be 'active', 'reactive', or 'both'")
 
-    return {ComponentType.sym_load: load_profile}
+    # start composing the return dict
+    update_data = {ComponentType.sym_load: load_profile}
+
+    # 2) optionally build transformer update
+    if transformer_id >= 0:
+        # initialize the transformer update array
+        transformer_update = initialize_array(
+            DatasetType.update, ComponentType.transformer, (active_batch_profile.shape[0], 1)
+        )
+
+        # assign the transformer ID
+        transformer_update["id"] = np.array([transformer_id], dtype=int)
+
+        # set the tap position for all timestamps
+        transformer_update["tap_pos"] = tap_pos
+
+        # add to update_data
+        update_data[ComponentType.transformer] = transformer_update
+
+    return update_data
 
 
 def calculate_power_flow(input_data, update_data):
@@ -253,12 +317,6 @@ def main():
         print(f"Failed to load input data: {e}")
         return
 
-    try:
-        line_df = DataFrame(input_data[ComponentType.line])
-        # display(line_df)
-    except Exception:
-        pass
-
     # Load batch profiles
     try:
         active_power_profile, reactive_power_profile = load_batch_profiles(
@@ -274,7 +332,6 @@ def main():
     # display(reactive_power_profile)
     # Prepare update_data for active profile, you can also add reactive now
     update_data = prepare_update_data(active_power_profile, reactive_power_profile, profile_type="both")
-    display(update_data)
     # Run the analysis
     power_flow_results(update_data, active_power_profile)
 
