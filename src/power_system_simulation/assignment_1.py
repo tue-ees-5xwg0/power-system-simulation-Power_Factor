@@ -215,9 +215,12 @@ class GraphProcessor(nx.Graph):
             downstream_root = v if depth.get(v, 0) > depth.get(u, 0) else u
 
         descendants = list(nx.descendants(self.dfs_tree, downstream_root))
-        print([downstream_root] + descendants)
+        # print([downstream_root] + descendants)
         return [downstream_root] + descendants
         # put your implementation here
+
+
+
 
     def find_alternative_edges(self, disabled_edge_id: int) -> List[int]:
         ans = []
@@ -227,7 +230,7 @@ class GraphProcessor(nx.Graph):
         for i, (u, v) in enumerate(self.edges()):
             if self.edge_enabled[i] == True and self.edge_ids[i] != disabled_edge_id:
                 H.add_edge(u, v)
-        for i, (u, v) in enumerate(self.edges):
+        for i, (u, v) in enumerate(self.edge_vertex_id_pairs):
             if self.edge_enabled[i] == False and self.edge_ids[i] != disabled_edge_id:
                 H.add_edge(u, v)
                 if nx.number_connected_components(H) == 1 and nx.is_forest(H):
@@ -276,3 +279,4 @@ class GraphProcessor(nx.Graph):
 # edge_vertex_id_pairs = [(0, 2), (0, 4), (0, 6), (2, 4), (2, 10), (4, 6)]
 # edge_enabled = [True, True, True, False, True, True]
 # source_vertex_id = 0
+    
