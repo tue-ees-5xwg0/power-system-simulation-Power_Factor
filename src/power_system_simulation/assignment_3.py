@@ -1,6 +1,7 @@
 # some basic imports
 import json
 import pprint
+import random
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -232,6 +233,122 @@ def input_data_validity_check(input_data, meta_data):
     check_number_of_ev_profiles(
         ev_active_power_profile.columns, input_data[ComponentType.sym_load]["id"]
     )  # checks if number of EV profiles does not exceed number of sym_loads
+
+
+def ev_penetration(
+    input_data,
+    meta_data,
+    ev_profiles_df: pd.DataFrame,
+    penetration_level,
+    random_seed: int = None,
+):
+    """
+    Assign EV charging profiles to sym_load houses based on penetration level usiing a dandom seed for replicability
+
+    Returns:
+        dict: sym_load node id -> EV profile column name (or None if no EV assigned)
+    """
+    # Set up randomness based on seed
+    if random_seed is not None:
+        random.seed(random_seed)
+
+    # Extract sym_load nodes
+    sym_load_nodes = [load["node"] for load in input_data[ComponentType.sym_load]]
+
+    # Total houses
+    total_houses = len(sym_load_nodes)
+    # Number of feeders
+    lv_feeders = meta_data["lv_feeders"]
+    num_feeders = len(lv_feeders)
+
+    # Calculate EVs per feeder after checking to avoid devide by 0 error
+    if num_feeders == 0:
+        return [], pd.DataFrame()  # or appropriate empty outputs
+    evs_per_feeder = round(penetration_level * total_houses / num_feeders)
+
+    line_nodes_id_pairs = [(l["from_node"], l["to_node"]) for l in input_data[ComponentType.line]]
+    line_id_list = [l["id"] for l in input_data[ComponentType.line]]
+    status_list = [l["to_status"] for l in input_data[ComponentType.line]]
+
+    transformer_tuples = [(t["from_node"], t["to_node"]) for t in input_data[ComponentType.transformer]]
+    transformer_ids = [t["id"] for t in input_data[ComponentType.transformer]]
+    transformer_statuses = [t["to_status"] for t in input_data[ComponentType.transformer]]
+
+    # Combine everything
+    line_nodes_id_pairs += transformer_tuples
+    line_id_list += transformer_ids
+    status_list += transformer_statuses
+
+    node_ids = [n["id"] for n in input_data[ComponentType.node]]
+    graph_processor = a1.GraphProcessor(
+        node_ids, line_id_list, line_nodes_id_pairs, status_list, meta_data["mv_source_node"]
+    )
+    # Mapping sym_load node -> assigned EV profile (None initially)
+    ev_assignment = {node: None for node in sym_load_nodes}
+
+    # Keep track of EV profiles assigned
+    assigned_profiles = set()
+
+    # EV profiles available (columns of ev_profiles_df)
+    ev_profile_ids = list(ev_profiles_df.columns)
+
+    # Assign EVs per feeder
+    for feeder_line in lv_feeders:
+        # Find which houses are connected to wih feeder
+        downstream = graph_processor.find_downstream_vertices(feeder_line)
+        # Nodes that are houses and ar downstream of feeder are saved
+        feeder_houses = set(downstream).intersection(sym_load_nodes)
+
+        # Error in case more evs per feeder than houses per feeder
+        if evs_per_feeder > len(feeder_houses):
+            print("Error Number of ev feeders larger than feeder houses")
+
+        # Chose randomly which houses to apply ev profiles to
+        selected_houses = random.sample(list(feeder_houses), evs_per_feeder)
+
+        # Create a mapping for assigning random ev profiles to the randomly selected houses
+        for house in selected_houses:
+            # Find an EV profile not assigned yet
+            available_profiles = [p for p in ev_profile_ids if p not in assigned_profiles]
+            if not available_profiles:
+                raise RuntimeError("Not enough EV profiles to assign uniquely.")
+            # Choose random ev profile
+            chosen_profile = random.choice(available_profiles)
+            # Assign random ev profile
+            ev_assignment[house] = chosen_profile
+            # Add assigned profile to list as to not assign it twice
+            assigned_profiles.add(chosen_profile)
+
+    # Load the baseline active power profile
+    active_power_profile = pd.read_parquet(
+        "data/assignment 3 input/active_power_profile.parquet"
+    )  # Update path if needed
+    reactive_power_profile = pd.read_parquet("data/assignment 3 input/reactive_power_profile.parquet")
+    # Create a copy to avoid modifying the original directly
+    merged_active_profile = active_power_profile.copy()
+    merged_reactive_profile = reactive_power_profile.copy()
+    # Convert node number to id
+    sym_df = input_data[ComponentType.sym_load]
+    node_to_id = dict(zip(sym_df["node"].tolist(), sym_df["id"].tolist()))
+
+    # Add EV profiles to corresponding house profiles
+    for node_num, ev_profile_id in ev_assignment.items():
+        if ev_profile_id is not None:
+            node_id = node_to_id[node_num]  # convert node number to node ID
+            # Sum the EV profile power to the house's active power profile by node_id
+            merged_active_profile[node_id] += ev_profiles_df[ev_profile_id]
+
+    # Run powerflow using assignment 2
+    update_data = a2.prepare_update_data(merged_active_profile, merged_reactive_profile, "both")
+    output_data = a2.calculate_power_flow(input_data, update_data)
+
+    output_line = a2.calculate_line_stats(output_data, merged_active_profile)
+    output_node = a2.calculate_node_stats(output_data, merged_active_profile)
+
+    # Optionally display:
+    # a2.display_results(output_node, output_line)
+
+    return output_line, output_node
 
 
 def N_minus_one_calculation(id_to_disconnect):

@@ -1,17 +1,57 @@
+import json
 from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import pytest
+from power_grid_model.utils import json_deserialize, json_serialize
 
 import power_system_simulation.assignment_1 as a1
 
 # import power_system_simulation.assignment_2 as a2
 import power_system_simulation.assignment_3 as a3
+from power_system_simulation.assignment_3 import ComponentType, ev_penetration
+
+with open("data/assignment 3 input/input_network_data.json") as fp:
+    data = fp.read()
+
+input_data = json_deserialize(data)
+
+with open("data/assignment 3 input/meta_data.json") as fp:
+    meta = fp.read()
+
+meta_data = json.loads(meta)
+
+
+active_power_profile = pd.read_parquet("data/assignment 3 input/active_power_profile.parquet")
+reactive_power_profile = pd.read_parquet("data/assignment 3 input/reactive_power_profile.parquet")
+ev_active_power_profile = pd.read_parquet("data/assignment 3 input/ev_active_power_profile.parquet")
+
+dtype = {
+    "names": [
+        "id",
+        "from_node",
+        "to_node",
+        "from_status",
+        "to_status",
+        "r1",
+        "x1",
+        "c1",
+        "tan1",
+        "r0",
+        "x0",
+        "c0",
+        "tan0",
+        "i_n",
+    ]
+}
+df = pd.DataFrame(
+    input_data[ComponentType.line], columns=dtype["names"]
+)  # get the data for the lines of the grid as a dataframe
 
 
 def test_check_source_transformer():
-    meta = {"lv_busbar": 1, "lv_feeders": [16, 20], "mv_source_node": 0, "source": 10, "transformer": 11}
+    meta = {"lv_busbar": 1, "lv_feeders": [16, 20], "mv_source_node": 0, "source": 10, "transformer": [11, 10]}
     with pytest.raises(a3.MoreThanOneTransformerOrSource):
         a3.check_source_transformer(meta)
 
@@ -139,4 +179,21 @@ def test_optimal_tap_position_criteria():
         a3.optimal_tap_position(criteria)
 
 
-test_optimal_tap_position_criteria()
+def test_ev_assignment_basic():
+    penetration_level = 1  # or fraction, depending on your logic
+    output_node, output_line = ev_penetration(
+        input_data, meta_data, ev_active_power_profile, penetration_level, random_seed=42
+    )
+    # assigned_df should have a row for every node
+    assert len(output_node) == len(input_data["node"]) - 1
+
+
+def test_no_ev_assigned_if_no_feeders():
+    modified_meta = meta_data.copy()
+    modified_meta["lv_feeders"] = []  # No feeders
+
+    assigned_nodes, assigned_df = ev_penetration(
+        input_data, modified_meta, ev_active_power_profile, penetration_level=5, random_seed=42
+    )
+    assert len(assigned_nodes) == 0
+    assert assigned_df.empty
