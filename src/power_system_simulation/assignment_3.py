@@ -321,9 +321,9 @@ def ev_penetration(
 
     # Load the baseline active power profile
     active_power_profile = pd.read_parquet(
-        "data/assignment 3 input/active_power_profile.parquet"
+        "data/assignment_3_input/active_power_profile.parquet"
     )  # Update path if needed
-    reactive_power_profile = pd.read_parquet("data/assignment 3 input/reactive_power_profile.parquet")
+    reactive_power_profile = pd.read_parquet("data/assignment_3_input/reactive_power_profile.parquet")
     # Create a copy to avoid modifying the original directly
     merged_active_profile = active_power_profile.copy()
     merged_reactive_profile = reactive_power_profile.copy()
@@ -438,20 +438,20 @@ def optimal_tap_position(criteria):
         # display(pd.DataFrame({"tap_position": tap_steps, "total_loss": total_loss}))
 
 
-with open("data/assignment 3 input/input_network_data.json") as fp:
+with open("data/assignment_3_input/input_network_data.json") as fp:
     data = fp.read()
 
 input_data = json_deserialize(data)
 
-with open("data/assignment 3 input/meta_data.json") as fp:
+with open("data/assignment_3_input/meta_data.json") as fp:
     meta = fp.read()
 
 meta_data = json.loads(meta)
 # pprint.pprint(meta_data)
 
-active_power_profile = pd.read_parquet("data/assignment 3 input/active_power_profile.parquet")
-reactive_power_profile = pd.read_parquet("data/assignment 3 input/reactive_power_profile.parquet")
-ev_active_power_profile = pd.read_parquet("data/assignment 3 input/ev_active_power_profile.parquet")
+active_power_profile = pd.read_parquet("data/assignment_3_input/active_power_profile.parquet")
+reactive_power_profile = pd.read_parquet("data/assignment_3_input/reactive_power_profile.parquet")
+ev_active_power_profile = pd.read_parquet("data/assignment_3_input/ev_active_power_profile.parquet")
 
 dtype = {
     "names": [
