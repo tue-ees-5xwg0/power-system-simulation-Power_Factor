@@ -12,20 +12,20 @@ import power_system_simulation.assignment_1 as a1
 import power_system_simulation.assignment_3 as a3
 from power_system_simulation.assignment_3 import ComponentType, ev_penetration
 
-with open("data/assignment 3 input/input_network_data.json") as fp:
+with open("data/assignment_3_input/input_network_data.json") as fp:
     data = fp.read()
 
 input_data = json_deserialize(data)
 
-with open("data/assignment 3 input/meta_data.json") as fp:
+with open("data/assignment_3_input/meta_data.json") as fp:
     meta = fp.read()
 
 meta_data = json.loads(meta)
 
 
-active_power_profile = pd.read_parquet("data/assignment 3 input/active_power_profile.parquet")
-reactive_power_profile = pd.read_parquet("data/assignment 3 input/reactive_power_profile.parquet")
-ev_active_power_profile = pd.read_parquet("data/assignment 3 input/ev_active_power_profile.parquet")
+active_power_profile = pd.read_parquet("data/assignment_3_input/active_power_profile.parquet")
+reactive_power_profile = pd.read_parquet("data/assignment_3_input/reactive_power_profile.parquet")
+ev_active_power_profile = pd.read_parquet("data/assignment_3_input/ev_active_power_profile.parquet")
 
 dtype = {
     "names": [
@@ -160,7 +160,7 @@ def test_find_alternative_lines():
 # test_find_alternative_lines()
 
 # def test_power_flow_calc():
-#     active_power_profile=pd.read_parquet("data/assignment 3 input/active_power_profile.parquet")
+#     active_power_profile=pd.read_parquet("data/assignment_3_input/active_power_profile.parquet")
 #     alt_lines_list=[24]
 #     line_id_list=[16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
 #     output_data=pd.DataFrame()
